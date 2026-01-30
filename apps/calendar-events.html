@@ -235,6 +235,26 @@
             transition: opacity 0.2s;
         }
         .event-card .event-download:hover { opacity: 0.85; }
+        .event-card .event-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .event-card .event-gcal {
+            display: inline-block;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-decoration: none;
+        }
+        .event-card .event-gcal:hover { opacity: 0.85; }
 
         .download-all-btn {
             width: 100%;
@@ -575,7 +595,10 @@
 
                 card.innerHTML = '<div class="event-title">' + escapeHtml(evt.title) + '</div>' +
                     detailsHtml +
-                    '<button class="event-download" onclick="downloadEvent(' + i + ')">&#128229; Add to Calendar</button>';
+                    '<div class="event-buttons">' +
+                    '<button class="event-download" onclick="downloadEvent(' + i + ')">&#128229; .ics File</button>' +
+                    '<a class="event-gcal" href="' + buildGoogleCalUrl(evt) + '" target="_blank" rel="noopener">&#128197; Google Calendar</a>' +
+                    '</div>';
 
                 container.appendChild(card);
             });
@@ -611,6 +634,54 @@
             const d = document.createElement('div');
             d.textContent = str;
             return d.innerHTML;
+        }
+
+        // --- Google Calendar URL ---
+        function buildGoogleCalUrl(evt) {
+            const startClean = (evt.start_date || '').replace(/[-:]/g, '');
+            let dates;
+
+            if (evt.all_day || startClean.length <= 8) {
+                const startDate = startClean.substring(0, 8);
+                let endDate;
+                if (evt.end_date) {
+                    endDate = evt.end_date.replace(/[-:]/g, '').substring(0, 8);
+                } else {
+                    const y = parseInt(startDate.substring(0, 4));
+                    const m = parseInt(startDate.substring(4, 6)) - 1;
+                    const d = parseInt(startDate.substring(6, 8));
+                    const next = new Date(y, m, d + 1);
+                    endDate = next.getFullYear().toString() +
+                        String(next.getMonth() + 1).padStart(2, '0') +
+                        String(next.getDate()).padStart(2, '0');
+                }
+                dates = startDate + '/' + endDate;
+            } else {
+                const startDt = startClean.substring(0, 15);
+                let endDt;
+                if (evt.end_date) {
+                    endDt = evt.end_date.replace(/[-:]/g, '').substring(0, 15);
+                } else {
+                    const y = parseInt(startClean.substring(0, 4));
+                    const mo = parseInt(startClean.substring(4, 6)) - 1;
+                    const d = parseInt(startClean.substring(6, 8));
+                    const h = parseInt(startClean.substring(9, 11));
+                    const mi = parseInt(startClean.substring(11, 13));
+                    const s = parseInt(startClean.substring(13, 15) || '0');
+                    const end = new Date(y, mo, d, h + 1, mi, s);
+                    endDt = formatICSDate(end);
+                }
+                dates = startDt + '/' + endDt;
+            }
+
+            const params = new URLSearchParams();
+            params.set('action', 'TEMPLATE');
+            params.set('text', evt.title || '');
+            params.set('dates', dates);
+            if (evt.location) params.set('location', evt.location);
+            if (evt.description) params.set('details', evt.description);
+
+            return 'https://calendar.google.com/calendar/render?' + params.toString();
         }
 
         // --- ICS Generation ---
