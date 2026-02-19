@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UV Tutorial Playground</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&family=Fira+Code:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --purple-dark: #5b21b6;
+    --pink: #ec4899;
+    --yellow: #fbbf24;
+    --green: #34d399;
+    --green-dark: #059669;
+    --red: #f87171;
+    --red-dark: #dc2626;
+    --blue: #60a5fa;
+    --orange: #fb923c;
+    --bg: #fef3c7;
+    --card-bg: #ffffff;
+    --terminal-bg: #1e1b2e;
+    --terminal-text: #e2e8f0;
+  }
+
+  body {
+    font-family: 'Comic Neue', cursive, sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(124,58,237,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(236,72,153,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(251,191,36,0.06) 0%, transparent 60%);
+    min-height: 100vh;
+    color: #1e1b4b;
+    overflow-x: hidden;
+  }
+
+  /* floating blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.12;
+    z-index: 0;
+    animation: blobFloat 8s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .blob-1 { width: 300px; height: 300px; background: var(--purple); top: -80px; left: -60px; }
+  .blob-2 { width: 200px; height: 200px; background: var(--pink); bottom: 10%; right: -40px; animation-delay: -3s; }
+  .blob-3 { width: 250px; height: 250px; background: var(--yellow); top: 40%; left: 70%; animation-delay: -5s; }
+
+  @keyframes blobFloat {
+    to { transform: translate(30px, 20px) scale(1.08); }
+  }
+
+  /* header */
+  header {
+    text-align: center;
+    padding: 50px 20px 30px;
+    position: relative;
+    z-index: 1;
+  }
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(2px 4px 0 rgba(124,58,237,0.18));
+    margin-bottom: 8px;
+  }
+  header .mascot {
+    font-size: 3.6rem;
+    animation: bounce 1.6s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  header p {
+    font-size: 1.15rem;
+    color: #6b7280;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* main container */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* section cards */
+  .card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 24px rgba(124,58,237,0.08), 0 1px 3px rgba(0,0,0,0.06);
+    border: 2.5px solid transparent;
+    transition: border-color 0.3s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    border-radius: 24px 24px 0 0;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card.purple::before { background: linear-gradient(90deg, var(--purple), var(--purple-light)); }
+  .card.pink::before   { background: linear-gradient(90deg, var(--pink), #f9a8d4); }
+  .card.green::before  { background: linear-gradient(90deg, var(--green-dark), var(--green)); }
+  .card.blue::before   { background: linear-gradient(90deg, #3b82f6, var(--blue)); }
+  .card.orange::before { background: linear-gradient(90deg, #ea580c, var(--orange)); }
+  .card.red::before    { background: linear-gradient(90deg, var(--red-dark), var(--red)); }
+
+  .card h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.55rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h2 .icon { font-size: 1.7rem; }
+  .card .desc {
+    color: #6b7280;
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+
+  /* terminal widget */
+  .terminal {
+    background: var(--terminal-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 14px 0;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .terminal-bar {
+    background: #2d2640;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .terminal-dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+  }
+  .terminal-dot.r { background: #f87171; }
+  .terminal-dot.y { background: #fbbf24; }
+  .terminal-dot.g { background: #34d399; }
+  .terminal-bar span {
+    color: #a78bfa;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.78rem;
+    margin-left: 8px;
+  }
+  .terminal-body {
+    padding: 16px 18px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.88rem;
+    color: var(--terminal-text);
+    min-height: 50px;
+    max-height: 340px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.6;
+  }
+  .terminal-body::-webkit-scrollbar { width: 6px; }
+  .terminal-body::-webkit-scrollbar-thumb { background: #4c3f78; border-radius: 3px; }
+
+  .prompt-line { color: var(--green); }
+  .cmd-text { color: #f1f5f9; }
+  .output-text { color: #cbd5e1; }
+  .success-text { color: #34d399; }
+  .error-text { color: #f87171; }
+  .info-text { color: #60a5fa; }
+  .path-text { color: #fbbf24; }
+  .muted-text { color: #64748b; }
+
+  /* buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Comic Neue', cursive;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    position: relative;
+    top: 0;
+  }
+  .btn:active {
+    top: 3px;
+    box-shadow: 0 0 0 rgba(0,0,0,0.15);
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-purple:hover:not(:disabled) { background: var(--purple-dark); }
+  .btn-pink { background: var(--pink); color: #fff; }
+  .btn-pink:hover:not(:disabled) { background: #db2777; }
+  .btn-green { background: var(--green-dark); color: #fff; }
+  .btn-green:hover:not(:disabled) { background: #047857; }
+  .btn-red { background: var(--red-dark); color: #fff; }
+  .btn-red:hover:not(:disabled) { background: #b91c1c; }
+  .btn-blue { background: #3b82f6; color: #fff; }
+  .btn-blue:hover:not(:disabled) { background: #2563eb; }
+  .btn-orange { background: #ea580c; color: #fff; }
+  .btn-orange:hover:not(:disabled) { background: #c2410c; }
+  .btn-outline {
+    background: transparent;
+    border: 2.5px solid var(--purple);
+    color: var(--purple);
+    box-shadow: none;
+  }
+  .btn-outline:hover:not(:disabled) { background: rgba(124,58,237,0.08); }
+
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  /* copy button */
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: rgba(167,139,250,0.2);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.75rem;
+    font-family: 'Fira Code', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 2;
+  }
+  .copy-btn:hover { background: rgba(167,139,250,0.4); }
+
+  /* status badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+  .badge-success { background: #d1fae5; color: #047857; }
+  .badge-error { background: #fee2e2; color: #b91c1c; }
+  .badge-info { background: #dbeafe; color: #1d4ed8; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+
+  /* tool grid */
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .tool-card {
+    background: #f8f5ff;
+    border: 2px solid #e9e0ff;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .tool-card:hover {
+    border-color: var(--purple-light);
+    transform: scale(1.03);
+  }
+  .tool-card .tool-icon { font-size: 2rem; margin-bottom: 6px; }
+  .tool-card .tool-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .tool-card .tool-desc {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 10px;
+  }
+  .tool-card .tool-status {
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  /* spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  .spinner-dark {
+    border-color: rgba(124,58,237,0.2);
+    border-top-color: var(--purple);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* filesystem tree */
+  .tree {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    background: #f8f5ff;
+    border-radius: 12px;
+    padding: 18px;
+    border: 2px dashed #d8ccf5;
+    margin: 12px 0;
+    line-height: 1.8;
+  }
+  .tree .folder { color: var(--purple); font-weight: 600; }
+  .tree .file { color: #6b7280; }
+  .tree .highlight { color: var(--pink); font-weight: 600; }
+
+  /* progress bar */
+  .progress-wrap {
+    background: #e5e7eb;
+    border-radius: 50px;
+    height: 22px;
+    overflow: hidden;
+    margin: 12px 0;
+    position: relative;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    min-width: 36px;
+  }
+
+  /* confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* score */
+  .score-display {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f5ff, #fce7f3);
+    border-radius: 18px;
+    margin: 14px 0;
+  }
+  .score-num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .score-label { color: #6b7280; font-size: 0.9rem; }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    .card { padding: 22px 18px; }
+    .tool-grid { grid-template-columns: 1fr 1fr; }
+    .btn { padding: 9px 16px; font-size: 0.88rem; }
+  }
+
+  /* wiggle animation */
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-4deg); }
+    75% { transform: rotate(4deg); }
+  }
+  .wiggle { animation: wiggle 0.4s ease; }
+
+  /* fade-in */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card { animation: fadeUp 0.5s ease both; }
+  .card:nth-child(2) { animation-delay: 0.08s; }
+  .card:nth-child(3) { animation-delay: 0.16s; }
+  .card:nth-child(4) { animation-delay: 0.24s; }
+  .card:nth-child(5) { animation-delay: 0.32s; }
+  .card:nth-child(6) { animation-delay: 0.40s; }
+  .card:nth-child(7) { animation-delay: 0.48s; }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--purple-dark);
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    z-index: 10000;
+    box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+  <div class="mascot">&#127793;</div>
+  <h1>UV Playground</h1>
+  <p>A fun, interactive tutorial to test that <strong>uv</strong> &mdash; the blazing-fast Python package manager &mdash; is installed and working on your machine!</p>
+</header>
+
+<div class="container">
+
+  <!-- 1. Health Check -->
+  <div class="card purple" id="health-card">
+    <h2><span class="icon">&#129657;</span> Health Check</h2>
+    <p class="desc">First things first &mdash; let's make sure <code>uv</code> is installed and reachable. Click the button and we'll run a quick check!</p>
+    <div class="terminal" id="health-term">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span>health-check</span>
+      </div>
+      <div class="terminal-body" id="health-output"><span class="muted-text">Waiting for you to press the button...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="runHealthCheck()">&#9889; Run Health Check</button>
+    </div>
+  </div>
+
+  <!-- 2. Version & System Info -->
+  <div class="card pink" id="sysinfo-card">
+    <h2><span class="icon">&#128270;</span> Version & System Info</h2>
+    <p class="desc">Let's see what version of uv you're running and grab some handy system info.</p>
+    <div class="terminal" id="sysinfo-term">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span>system-info</span>
+      </div>
+      <div class="terminal-body" id="sysinfo-output"><span class="muted-text">Click below to discover your uv details...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-pink" onclick="runSysInfo()">&#128269; Discover Info</button>
+    </div>
+  </div>
+
+  <!-- 3. Install Python -->
+  <div class="card green" id="python-card">
+    <h2><span class="icon">&#128013;</span> Install & Manage Pythons</h2>
+    <p class="desc">uv can install and manage multiple Python versions. Try installing one below &mdash; or see which ones you already have!</p>
+    <div class="terminal" id="python-term">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span>python-manager</span>
+      </div>
+      <div class="terminal-body" id="python-output"><span class="muted-text">Ready to manage some Pythons...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="runPythonList()">&#128203; List Installed</button>
+      <button class="btn btn-green" onclick="runPythonInstall('3.12')">Install 3.12</button>
+      <button class="btn btn-green" onclick="runPythonInstall('3.11')">Install 3.11</button>
+      <button class="btn btn-green" onclick="runPythonInstall('3.10')">Install 3.10</button>
+    </div>
+  </div>
+
+  <!-- 4. Tool Install / Uninstall -->
+  <div class="card blue" id="tools-card">
+    <h2><span class="icon">&#128295;</span> Tool Installer</h2>
+    <p class="desc">Install popular Python CLI tools with <code>uv tool install</code>. Each tool gets its own isolated environment. Click any tool to install it &mdash; or uninstall ones you don't need!</p>
+    <div class="tool-grid" id="tool-grid"></div>
+    <div class="terminal" id="tools-term">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span>tool-installer</span>
+      </div>
+      <div class="terminal-body" id="tools-output"><span class="muted-text">Pick a tool above to get started...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="listInstalledTools()">&#128203; List Installed Tools</button>
+      <button class="btn btn-outline" onclick="showToolPaths()">&#128193; Show Tool Paths</button>
+    </div>
+  </div>
+
+  <!-- 5. Virtual Environment Playground -->
+  <div class="card orange" id="venv-card">
+    <h2><span class="icon">&#127912;</span> Virtual Environment Playground</h2>
+    <p class="desc">Create a virtual environment, install a package into it, and peek at the filesystem layout!</p>
+    <div class="terminal" id="venv-term">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span>venv-playground</span>
+      </div>
+      <div class="terminal-body" id="venv-output"><span class="muted-text">Let's build a virtual environment...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-orange" onclick="createVenv()">&#127793; Create Venv</button>
+      <button class="btn btn-orange" onclick="installIntoPip('requests')">Install requests</button>
+      <button class="btn btn-orange" onclick="installIntoPip('flask')">Install flask</button>
+      <button class="btn btn-orange" onclick="peekVenv()">&#128065; Peek Inside</button>
+      <button class="btn btn-red" onclick="destroyVenv()">&#128465; Destroy Venv</button>
+    </div>
+  </div>
+
+  <!-- 6. Run a Script -->
+  <div class="card red" id="script-card">
+    <h2><span class="icon">&#127937;</span> Quick Script Runner</h2>
+    <p class="desc">Use <code>uv run</code> to execute a Python one-liner in an ephemeral environment. No setup needed &mdash; uv handles everything!</p>
+    <div class="terminal" id="script-term">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span>script-runner</span>
+      </div>
+      <div class="terminal-body" id="script-output"><span class="muted-text">Pick a fun script to run...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="runScript('hello')">&#128075; Hello World</button>
+      <button class="btn btn-red" onclick="runScript('sysinfo')">&#128187; System Info</button>
+      <button class="btn btn-red" onclick="runScript('fibonacci')">&#129518; Fibonacci</button>
+      <button class="btn btn-red" onclick="runScript('joke')">&#129315; Random Joke</button>
+    </div>
+  </div>
+
+  <!-- 7. Score / Progress -->
+  <div class="card purple" id="score-card">
+    <h2><span class="icon">&#127942;</span> Your UV Score</h2>
+    <p class="desc">Track your progress through the tutorial. Complete each section to fill the bar!</p>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%">0%</div>
+    </div>
+    <div class="score-display">
+      <div class="score-num" id="score-num">0 / 7</div>
+      <div class="score-label">sections completed</div>
+    </div>
+    <div id="badges-row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center;"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ───────────────────────────────────────────────
+// State
+// ───────────────────────────────────────────────
+const completed = new Set();
+const TOTAL_SECTIONS = 7;
+let venvCreated = false;
+let venvDir = '/tmp/uv-playground-venv';
+
+const TOOLS = [
+  { id: 'ruff',     name: 'Ruff',     icon: '\u26A1', desc: 'Lightning-fast linter', installed: false },
+  { id: 'black',    name: 'Black',    icon: '\u2B1B', desc: 'Code formatter',        installed: false },
+  { id: 'httpie',   name: 'HTTPie',   icon: '\uD83C\uDF10', desc: 'Friendly HTTP client', installed: false },
+  { id: 'cowsay',   name: 'Cowsay',   icon: '\uD83D\uDC2E', desc: 'ASCII art fun',        installed: false },
+  { id: 'ruff-lsp', name: 'Ruff LSP', icon: '\uD83D\uDD0C', desc: 'Editor integration',   installed: false },
+  { id: 'pyright',  name: 'Pyright',  icon: '\uD83D\uDD0D', desc: 'Type checker',         installed: false },
+];
+
+// ───────────────────────────────────────────────
+// Helpers
+// ───────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function markComplete(section) {
+  if (completed.has(section)) return;
+  completed.add(section);
+  updateScore();
+  toast(`\u2705 Section complete: ${section}`);
+  if (completed.size === TOTAL_SECTIONS) {
+    setTimeout(() => {
+      launchConfetti();
+      toast('\uD83C\uDF89 ALL SECTIONS COMPLETE! You are a UV master!');
+    }, 500);
+  }
+}
+
+function updateScore() {
+  const pct = Math.round((completed.size / TOTAL_SECTIONS) * 100);
+  $('progress-bar').style.width = pct + '%';
+  $('progress-bar').textContent = pct + '%';
+  $('score-num').textContent = completed.size + ' / ' + TOTAL_SECTIONS;
+
+  const badges = $('badges-row');
+  badges.innerHTML = '';
+  const sectionNames = ['Health Check','System Info','Python Manager','Tool Installer','Venv Playground','Script Runner','All Complete'];
+  const sectionKeys = ['health','sysinfo','python','tools','venv','script','bonus'];
+  sectionKeys.forEach((key, i) => {
+    if (key === 'bonus') return;
+    const done = completed.has(key);
+    const b = document.createElement('span');
+    b.className = 'badge ' + (done ? 'badge-success' : 'badge-info');
+    b.textContent = (done ? '\u2705 ' : '\u2B1C ') + sectionNames[i];
+    badges.appendChild(b);
+  });
+}
+
+async function execCmd(cmd) {
+  try {
+    const resp = await fetch('/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cmd })
+    });
+    const data = await resp.json();
+    return { ok: data.exit_code === 0, stdout: data.stdout || '', stderr: data.stderr || '', code: data.exit_code };
+  } catch (e) {
+    return { ok: false, stdout: '', stderr: 'Could not reach backend. Make sure the server is running!\n' + e.message, code: -1 };
+  }
+}
+
+function appendToTerminal(id, html) {
+  const el = $(id);
+  el.innerHTML += html;
+  el.scrollTop = el.scrollHeight;
+}
+
+function setTerminal(id, html) {
+  const el = $(id);
+  el.innerHTML = html;
+  el.scrollTop = el.scrollHeight;
+}
+
+function promptLine(cmd) {
+  return `<span class="prompt-line">$ </span><span class="cmd-text">${escHtml(cmd)}</span>\n`;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function busyLine() {
+  return `<span class="muted-text"><span class="spinner spinner-dark"></span> Running...</span>\n`;
+}
+
+// ───────────────────────────────────────────────
+// 1. Health Check
+// ───────────────────────────────────────────────
+async function runHealthCheck() {
+  const out = 'health-output';
+  setTerminal(out, promptLine('uv --version') + busyLine());
+
+  const r = await execCmd('uv --version');
+  let html = promptLine('uv --version');
+  if (r.ok) {
+    html += `<span class="success-text">\u2705 ${escHtml(r.stdout.trim())}</span>\n\n`;
+    // which uv
+    html += promptLine('which uv');
+    const w = await execCmd('which uv');
+    html += `<span class="path-text">${escHtml(w.stdout.trim())}</span>\n\n`;
+    html += `<span class="success-text">\uD83C\uDF89 uv is installed and ready to go!</span>\n`;
+    markComplete('health');
+  } else {
+    html += `<span class="error-text">\u274C uv not found!</span>\n`;
+    html += `<span class="info-text">Install it with: curl -LsSf https://astral.sh/uv/install.sh | sh</span>\n`;
+  }
+  setTerminal(out, html);
+}
+
+// ───────────────────────────────────────────────
+// 2. Version & System Info
+// ───────────────────────────────────────────────
+async function runSysInfo() {
+  const out = 'sysinfo-output';
+  setTerminal(out, promptLine('uv version') + busyLine());
+
+  const cmds = [
+    { label: 'uv version',       cmd: 'uv version' },
+    { label: 'uv python find',   cmd: 'uv python find' },
+    { label: 'uname -a',         cmd: 'uname -a' },
+    { label: 'uv cache dir',     cmd: 'uv cache dir' },
+  ];
+
+  let html = '';
+  for (const c of cmds) {
+    html += promptLine(c.cmd);
+    const r = await execCmd(c.cmd);
+    html += `<span class="${r.ok ? 'output-text' : 'error-text'}">${escHtml((r.stdout || r.stderr).trim())}</span>\n\n`;
+    setTerminal(out, html + busyLine());
+  }
+  setTerminal(out, html + `<span class="success-text">\u2705 System info gathered!</span>\n`);
+  markComplete('sysinfo');
+}
+
+// ───────────────────────────────────────────────
+// 3. Python Manager
+// ───────────────────────────────────────────────
+async function runPythonList() {
+  const out = 'python-output';
+  setTerminal(out, promptLine('uv python list') + busyLine());
+  const r = await execCmd('uv python list');
+  let html = promptLine('uv python list');
+  html += `<span class="output-text">${escHtml((r.stdout || r.stderr).trim())}</span>\n`;
+  setTerminal(out, html);
+  markComplete('python');
+}
+
+async function runPythonInstall(ver) {
+  const out = 'python-output';
+  const cmd = `uv python install ${ver}`;
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  if (r.ok) {
+    html += `<span class="success-text">\u2705 Python ${ver} installed!</span>\n`;
+    html += `<span class="output-text">${escHtml(r.stdout.trim())}</span>\n\n`;
+    // show where it lives
+    const w = await execCmd(`uv python find ${ver}`);
+    html += promptLine(`uv python find ${ver}`);
+    html += `<span class="path-text">${escHtml(w.stdout.trim())}</span>\n`;
+  } else {
+    html += `<span class="output-text">${escHtml((r.stdout + r.stderr).trim())}</span>\n`;
+  }
+  setTerminal(out, html);
+  markComplete('python');
+}
+
+// ───────────────────────────────────────────────
+// 4. Tool Installer
+// ───────────────────────────────────────────────
+function renderToolGrid() {
+  const grid = $('tool-grid');
+  grid.innerHTML = '';
+  TOOLS.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'tool-card';
+    div.id = 'tool-' + t.id;
+    div.innerHTML = `
+      <div class="tool-icon">${t.icon}</div>
+      <div class="tool-name">${t.name}</div>
+      <div class="tool-desc">${t.desc}</div>
+      <div class="tool-status">${t.installed
+        ? '<span style="color:var(--green-dark)">\u2705 installed</span>'
+        : '<span style="color:#9ca3af">\u2B1C not installed</span>'}</div>
+      <div style="margin-top:8px;display:flex;gap:6px;justify-content:center">
+        <button class="btn ${t.installed ? 'btn-outline' : 'btn-purple'}" style="padding:6px 14px;font-size:0.8rem"
+          onclick="installTool('${t.id}')">${t.installed ? 'Reinstall' : 'Install'}</button>
+        ${t.installed ? `<button class="btn btn-red" style="padding:6px 14px;font-size:0.8rem"
+          onclick="uninstallTool('${t.id}')">Uninstall</button>` : ''}
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+async function installTool(id) {
+  const tool = TOOLS.find(t => t.id === id);
+  const out = 'tools-output';
+  const cmd = `uv tool install ${id}`;
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  html += `<span class="${r.ok || r.stdout.includes('already') || r.stderr.includes('already') ? 'success-text' : 'error-text'}">${escHtml((r.stdout + '\n' + r.stderr).trim())}</span>\n`;
+
+  if (r.ok || r.stdout.includes('already') || r.stderr.includes('already')) {
+    tool.installed = true;
+    renderToolGrid();
+    // show where
+    const w = await execCmd(`which ${id}`);
+    if (w.ok) {
+      html += `\n`;
+      html += promptLine(`which ${id}`);
+      html += `<span class="path-text">${escHtml(w.stdout.trim())}</span>\n`;
+    }
+    markComplete('tools');
+  }
+  setTerminal(out, html);
+}
+
+async function uninstallTool(id) {
+  const tool = TOOLS.find(t => t.id === id);
+  const out = 'tools-output';
+  const cmd = `uv tool uninstall ${id}`;
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  html += `<span class="${r.ok ? 'success-text' : 'error-text'}">${escHtml((r.stdout + '\n' + r.stderr).trim())}</span>\n`;
+  if (r.ok) {
+    tool.installed = false;
+    renderToolGrid();
+  }
+  setTerminal(out, html);
+}
+
+async function listInstalledTools() {
+  const out = 'tools-output';
+  const cmd = 'uv tool list';
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  html += `<span class="output-text">${escHtml((r.stdout || r.stderr).trim())}</span>\n`;
+  setTerminal(out, html);
+  markComplete('tools');
+}
+
+async function showToolPaths() {
+  const out = 'tools-output';
+  const cmd = 'uv tool dir';
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  html += `<span class="path-text">${escHtml((r.stdout || r.stderr).trim())}</span>\n\n`;
+
+  const cmd2 = 'uv tool dir --bin';
+  html += promptLine(cmd2);
+  const r2 = await execCmd(cmd2);
+  html += `<span class="path-text">${escHtml((r2.stdout || r2.stderr).trim())}</span>\n\n`;
+
+  // tree of tool dir
+  const toolDir = r.stdout.trim();
+  if (toolDir) {
+    const lsCmd = `ls -la ${toolDir} 2>/dev/null || echo "(empty)"`;
+    html += promptLine(`ls ${toolDir}`);
+    const ls = await execCmd(lsCmd);
+    html += `<span class="output-text">${escHtml(ls.stdout.trim())}</span>\n`;
+  }
+  setTerminal(out, html);
+  markComplete('tools');
+}
+
+// ───────────────────────────────────────────────
+// 5. Venv Playground
+// ───────────────────────────────────────────────
+async function createVenv() {
+  const out = 'venv-output';
+  const cmd = `uv venv ${venvDir}`;
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  html += `<span class="${r.ok ? 'success-text' : 'error-text'}">${escHtml((r.stdout + '\n' + r.stderr).trim())}</span>\n`;
+  if (r.ok || r.stderr.includes('already exists') || r.stderr.includes('Created')) {
+    venvCreated = true;
+    html += `\n<span class="info-text">\uD83D\uDCC1 Venv location: </span><span class="path-text">${venvDir}</span>\n`;
+    markComplete('venv');
+  }
+  setTerminal(out, html);
+}
+
+async function installIntoPip(pkg) {
+  const out = 'venv-output';
+  if (!venvCreated) {
+    setTerminal(out, `<span class="error-text">\u26A0\uFE0F Create a venv first!</span>\n`);
+    return;
+  }
+  const cmd = `uv pip install ${pkg} --python ${venvDir}/bin/python`;
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  html += `<span class="${r.ok ? 'success-text' : 'error-text'}">${escHtml((r.stdout + '\n' + r.stderr).trim())}</span>\n`;
+  setTerminal(out, html);
+  markComplete('venv');
+}
+
+async function peekVenv() {
+  const out = 'venv-output';
+  if (!venvCreated) {
+    setTerminal(out, `<span class="error-text">\u26A0\uFE0F Create a venv first!</span>\n`);
+    return;
+  }
+  setTerminal(out, busyLine());
+
+  let html = '';
+  // show tree
+  const cmd = `ls -R ${venvDir} | head -50`;
+  html += promptLine(`ls -R ${venvDir}`);
+  const r = await execCmd(cmd);
+  html += `<span class="output-text">${escHtml(r.stdout.trim())}</span>\n\n`;
+
+  // installed packages
+  const pipCmd = `uv pip list --python ${venvDir}/bin/python`;
+  html += promptLine(pipCmd);
+  const r2 = await execCmd(pipCmd);
+  html += `<span class="output-text">${escHtml((r2.stdout || r2.stderr).trim())}</span>\n`;
+  setTerminal(out, html);
+  markComplete('venv');
+}
+
+async function destroyVenv() {
+  const out = 'venv-output';
+  const cmd = `rm -rf ${venvDir}`;
+  setTerminal(out, promptLine(cmd) + busyLine());
+  const r = await execCmd(cmd);
+  let html = promptLine(cmd);
+  if (r.ok) {
+    html += `<span class="success-text">\uD83D\uDDD1\uFE0F Venv destroyed!</span>\n`;
+    venvCreated = false;
+  } else {
+    html += `<span class="error-text">${escHtml(r.stderr.trim())}</span>\n`;
+  }
+  setTerminal(out, html);
+}
+
+// ───────────────────────────────────────────────
+// 6. Script Runner
+// ───────────────────────────────────────────────
+const SCRIPTS = {
+  hello: {
+    label: 'Hello World',
+    cmd: `uv run python -c "print('\\n'.join(['\\u2728 Hello from UV! \\u2728', '', 'Python is working perfectly.', 'uv made it effortless!']))"`,
+  },
+  sysinfo: {
+    label: 'System Info',
+    cmd: `uv run python -c "
+import sys, platform, os
+print(f'\\U0001f4bb System Info via uv run')
+print(f'  Python:   {sys.version}')
+print(f'  Platform: {platform.platform()}')
+print(f'  Arch:     {platform.machine()}')
+print(f'  CWD:      {os.getcwd()}')
+print(f'  PID:      {os.getpid()}')
+"`,
+  },
+  fibonacci: {
+    label: 'Fibonacci',
+    cmd: `uv run python -c "
+def fib(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a
+        a, b = b, a + b
+nums = list(fib(15))
+print('\\U0001f9ee Fibonacci sequence (first 15):')
+for i, n in enumerate(nums):
+    bar = '\\u2588' * (n % 40 + 1)
+    print(f'  F({i:2d}) = {n:4d}  {bar}')
+"`,
+  },
+  joke: {
+    label: 'Random Joke',
+    cmd: `uv run python -c "
+import random
+jokes = [
+    ('Why do Python programmers prefer dark mode?', 'Because light attracts bugs! \\U0001f41b'),
+    ('Why did the developer quit?', 'Because they did not get arrays! \\U0001f4b0'),
+    ('How do you comfort a JavaScript developer?', 'You console.log them! \\U0001f5a5'),
+    ('Why do Java programmers wear glasses?', 'Because they cannot C#! \\U0001f453'),
+    ('What is a Python developer\\'s favorite movie?', 'The Matrix... because of all the imports! \\U0001f3ac'),
+]
+q, a = random.choice(jokes)
+print(f'\\U0001f923 {q}')
+print(f'   ... {a}')
+"`,
+  },
+};
+
+async function runScript(key) {
+  const out = 'script-output';
+  const s = SCRIPTS[key];
+  setTerminal(out, promptLine(s.cmd.split('\n')[0].trim()) + busyLine());
+  const r = await execCmd(s.cmd);
+  let html = promptLine(s.cmd.split('\n')[0].trim());
+  html += `<span class="${r.ok ? 'output-text' : 'error-text'}">${escHtml((r.stdout || r.stderr).trim())}</span>\n`;
+  setTerminal(out, html);
+  if (r.ok) markComplete('script');
+}
+
+// ───────────────────────────────────────────────
+// Confetti
+// ───────────────────────────────────────────────
+function launchConfetti() {
+  const canvas = $('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = [];
+  const colors = ['#7c3aed','#ec4899','#fbbf24','#34d399','#60a5fa','#fb923c','#f87171'];
+
+  for (let i = 0; i < 150; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vy: Math.random() * 3 + 2,
+      vx: (Math.random() - 0.5) * 2,
+      rot: Math.random() * 360,
+      rv: (Math.random() - 0.5) * 8,
+    });
+  }
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rot * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+      p.y += p.vy;
+      p.x += p.vx;
+      p.rot += p.rv;
+    });
+    frame++;
+    if (frame < 180) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+// ───────────────────────────────────────────────
+// Init
+// ───────────────────────────────────────────────
+renderToolGrid();
+updateScore();
+</script>
+</body>
+</html>
