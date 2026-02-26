@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code SDK Playground</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&family=Fira+Code:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --purple-dark: #5b21b6;
+    --pink: #ec4899;
+    --yellow: #fbbf24;
+    --green: #34d399;
+    --green-dark: #059669;
+    --red: #f87171;
+    --red-dark: #dc2626;
+    --blue: #60a5fa;
+    --blue-dark: #3b82f6;
+    --orange: #fb923c;
+    --orange-dark: #ea580c;
+    --teal: #2dd4bf;
+    --teal-dark: #0d9488;
+    --bg: #f0e6ff;
+    --card-bg: #ffffff;
+    --terminal-bg: #1e1b2e;
+    --terminal-text: #e2e8f0;
+  }
+
+  body {
+    font-family: 'Comic Neue', cursive, sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(124,58,237,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(236,72,153,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(45,212,191,0.06) 0%, transparent 60%);
+    min-height: 100vh;
+    color: #1e1b4b;
+    overflow-x: hidden;
+  }
+
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.12;
+    z-index: 0;
+    animation: blobFloat 8s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .blob-1 { width: 300px; height: 300px; background: var(--purple); top: -80px; left: -60px; }
+  .blob-2 { width: 200px; height: 200px; background: var(--teal); bottom: 10%; right: -40px; animation-delay: -3s; }
+  .blob-3 { width: 250px; height: 250px; background: var(--pink); top: 40%; left: 70%; animation-delay: -5s; }
+
+  @keyframes blobFloat {
+    to { transform: translate(30px, 20px) scale(1.08); }
+  }
+
+  header {
+    text-align: center;
+    padding: 50px 20px 30px;
+    position: relative;
+    z-index: 1;
+  }
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+    background: linear-gradient(135deg, var(--purple), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(2px 4px 0 rgba(124,58,237,0.18));
+    margin-bottom: 8px;
+  }
+  header .mascot {
+    font-size: 3.6rem;
+    animation: bounce 1.6s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  header p {
+    font-size: 1.15rem;
+    color: #6b7280;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 24px rgba(124,58,237,0.08), 0 1px 3px rgba(0,0,0,0.06);
+    border: 2.5px solid transparent;
+    transition: border-color 0.3s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    border-radius: 24px 24px 0 0;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card.purple::before { background: linear-gradient(90deg, var(--purple), var(--purple-light)); }
+  .card.pink::before   { background: linear-gradient(90deg, var(--pink), #f9a8d4); }
+  .card.green::before  { background: linear-gradient(90deg, var(--green-dark), var(--green)); }
+  .card.blue::before   { background: linear-gradient(90deg, var(--blue-dark), var(--blue)); }
+  .card.orange::before { background: linear-gradient(90deg, var(--orange-dark), var(--orange)); }
+  .card.red::before    { background: linear-gradient(90deg, var(--red-dark), var(--red)); }
+  .card.teal::before   { background: linear-gradient(90deg, var(--teal-dark), var(--teal)); }
+
+  .card h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.55rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h2 .icon { font-size: 1.7rem; }
+  .card .desc {
+    color: #6b7280;
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+  .card .desc code {
+    background: #f3f0ff;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.88em;
+    color: var(--purple-dark);
+  }
+
+  .terminal {
+    background: var(--terminal-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 14px 0;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .terminal-bar {
+    background: #2d2640;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .terminal-dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+  }
+  .terminal-dot.r { background: #f87171; }
+  .terminal-dot.y { background: #fbbf24; }
+  .terminal-dot.g { background: #34d399; }
+  .terminal-bar span {
+    color: #a78bfa;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.78rem;
+    margin-left: 8px;
+  }
+  .terminal-body {
+    padding: 16px 18px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: var(--terminal-text);
+    min-height: 50px;
+    max-height: 420px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.6;
+  }
+  .terminal-body::-webkit-scrollbar { width: 6px; }
+  .terminal-body::-webkit-scrollbar-thumb { background: #4c3f78; border-radius: 3px; }
+
+  .prompt { color: var(--green); }
+  .cmd { color: #f1f5f9; }
+  .out { color: #cbd5e1; }
+  .ok { color: #34d399; }
+  .err { color: #f87171; }
+  .info { color: #60a5fa; }
+  .path { color: #fbbf24; }
+  .dim { color: #64748b; }
+  .kw { color: #c084fc; }
+  .str { color: #34d399; }
+  .fn { color: #60a5fa; }
+  .type { color: #2dd4bf; }
+  .comment { color: #64748b; font-style: italic; }
+  .num { color: #fbbf24; }
+  .dec { color: #fb923c; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Comic Neue', cursive;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    position: relative;
+    top: 0;
+  }
+  .btn:active {
+    top: 3px;
+    box-shadow: 0 0 0 rgba(0,0,0,0.15);
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-purple:hover:not(:disabled) { background: var(--purple-dark); }
+  .btn-pink { background: var(--pink); color: #fff; }
+  .btn-pink:hover:not(:disabled) { background: #db2777; }
+  .btn-green { background: var(--green-dark); color: #fff; }
+  .btn-green:hover:not(:disabled) { background: #047857; }
+  .btn-red { background: var(--red-dark); color: #fff; }
+  .btn-red:hover:not(:disabled) { background: #b91c1c; }
+  .btn-blue { background: var(--blue-dark); color: #fff; }
+  .btn-blue:hover:not(:disabled) { background: #2563eb; }
+  .btn-orange { background: var(--orange-dark); color: #fff; }
+  .btn-orange:hover:not(:disabled) { background: #c2410c; }
+  .btn-teal { background: var(--teal-dark); color: #fff; }
+  .btn-teal:hover:not(:disabled) { background: #0f766e; }
+  .btn-outline {
+    background: transparent;
+    border: 2.5px solid var(--purple);
+    color: var(--purple);
+    box-shadow: none;
+  }
+  .btn-outline:hover:not(:disabled) { background: rgba(124,58,237,0.08); }
+
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+  .badge-success { background: #d1fae5; color: #047857; }
+  .badge-info { background: #dbeafe; color: #1d4ed8; }
+
+  .progress-wrap {
+    background: #e5e7eb;
+    border-radius: 50px;
+    height: 22px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, var(--purple), var(--teal));
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    min-width: 36px;
+  }
+
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .score-display {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f5ff, #e0f2fe);
+    border-radius: 18px;
+    margin: 14px 0;
+  }
+  .score-num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--purple), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .score-label { color: #6b7280; font-size: 0.9rem; }
+
+  .code-block {
+    background: var(--terminal-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 14px 0;
+  }
+  .code-bar {
+    background: #2d2640;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .code-bar .dots {
+    display: flex;
+    gap: 7px;
+  }
+  .code-bar .lang {
+    color: #a78bfa;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.78rem;
+  }
+  .code-body {
+    padding: 16px 18px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.82rem;
+    color: var(--terminal-text);
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .gui-panel {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 14px 0;
+  }
+  .gui-titlebar {
+    background: linear-gradient(90deg, var(--purple), var(--teal-dark));
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .gui-titlebar .dots {
+    display: flex;
+    gap: 6px;
+  }
+  .gui-titlebar .dot-ctrl {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+  }
+  .gui-body {
+    padding: 20px;
+  }
+  .gui-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .gui-input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: 'Comic Neue', cursive;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .gui-input:focus {
+    border-color: var(--purple-light);
+  }
+  .gui-log {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    min-height: 200px;
+    max-height: 340px;
+    overflow-y: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+  }
+  .gui-log::-webkit-scrollbar { width: 6px; }
+  .gui-log::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .gui-log .log-system { color: var(--purple); }
+  .gui-log .log-assistant { color: #1e1b4b; }
+  .gui-log .log-tool { color: var(--teal-dark); }
+  .gui-log .log-result { color: var(--green-dark); }
+  .gui-log .log-error { color: var(--red-dark); }
+  .gui-log .log-dim { color: #94a3b8; }
+  .gui-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 0.88rem;
+    color: #64748b;
+  }
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #cbd5e1;
+  }
+  .status-dot.active {
+    background: var(--green);
+    box-shadow: 0 0 6px rgba(52,211,153,0.5);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .status-dot.done { background: var(--green); }
+  .status-dot.error { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2.5px solid #4c3f78;
+    border-top-color: var(--purple-light);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @media (max-width: 600px) {
+    .card { padding: 22px 18px; }
+    .btn { padding: 9px 16px; font-size: 0.88rem; }
+    .gui-input-row { flex-direction: column; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card { animation: fadeUp 0.5s ease both; }
+  .card:nth-child(2) { animation-delay: 0.08s; }
+  .card:nth-child(3) { animation-delay: 0.16s; }
+  .card:nth-child(4) { animation-delay: 0.24s; }
+  .card:nth-child(5) { animation-delay: 0.32s; }
+  .card:nth-child(6) { animation-delay: 0.40s; }
+  .card:nth-child(7) { animation-delay: 0.48s; }
+  .card:nth-child(8) { animation-delay: 0.56s; }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--purple-dark);
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    z-index: 10000;
+    box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+  <div class="mascot">&#129302;</div>
+  <h1>Claude Code SDK Playground</h1>
+  <p>An interactive guide to building apps with the <strong>Python Claude Agent SDK</strong> &mdash; send prompts, add custom tools, stream progress, and bridge a GUI into an agentic coding session!</p>
+</header>
+
+<div class="container">
+
+  <!-- 1. Installation -->
+  <div class="card purple">
+    <h2><span class="icon">&#128230;</span> Installation &amp; Setup</h2>
+    <p class="desc">The SDK is a Python package called <code>claude-agent-sdk</code>. Install it with pip, then import <code>query</code> to start making calls. Requires Python 3.10+.</p>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        <span>setup</span>
+      </div>
+      <div class="terminal-body" id="install-out"><span class="dim">Click below to install the SDK...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="runInstall()">&#128229; Install SDK</button>
+      <button class="btn btn-outline" onclick="showImports()">&#128196; Show Imports</button>
+    </div>
+  </div>
+
+  <!-- 2. Basic Query -->
+  <div class="card teal">
+    <h2><span class="icon">&#128172;</span> Sending a Prompt</h2>
+    <p class="desc">Use <code>query()</code> to send a prompt. It returns an async iterator that streams messages &mdash; <code>AssistantMessage</code>, <code>UserMessage</code> (tool results), and a final <code>ResultMessage</code>.</p>
+    <div class="code-block">
+      <div class="code-bar">
+        <div class="dots">
+          <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        </div>
+        <span class="lang">agent.py</span>
+      </div>
+      <div class="code-body" id="query-code"></div>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        <span>query-output</span>
+      </div>
+      <div class="terminal-body" id="query-out"><span class="dim">Run the example to see messages stream in...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-teal" onclick="runBasicQuery()">&#9654; Run Query</button>
+      <button class="btn btn-outline" onclick="runQueryWithOptions()">&#9881; Show Options</button>
+    </div>
+  </div>
+
+  <!-- 3. Streaming Messages -->
+  <div class="card pink">
+    <h2><span class="icon">&#127897;</span> Streaming Message Types</h2>
+    <p class="desc">The SDK yields typed dataclass messages as Claude works. Use <code>isinstance()</code> to handle each one &mdash; show text from <code>AssistantMessage</code>, track tool calls from <code>ToolUseBlock</code>, and finalize on <code>ResultMessage</code>.</p>
+    <div class="code-block">
+      <div class="code-bar">
+        <div class="dots">
+          <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        </div>
+        <span class="lang">message_types.py</span>
+      </div>
+      <div class="code-body" id="stream-code"></div>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        <span>stream-demo</span>
+      </div>
+      <div class="terminal-body" id="stream-out"><span class="dim">Simulate the message stream to see each type...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-pink" onclick="runStreamDemo()">&#127897; Stream Messages</button>
+    </div>
+  </div>
+
+  <!-- 4. Adding Tools -->
+  <div class="card green">
+    <h2><span class="icon">&#128295;</span> Adding Custom Tools</h2>
+    <p class="desc">Use the <code>@tool()</code> decorator and <code>create_sdk_mcp_server()</code> to give Claude access to your app &mdash; databases, APIs, UI actions &mdash; anything you can wrap in an async function.</p>
+    <div class="code-block">
+      <div class="code-bar">
+        <div class="dots">
+          <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        </div>
+        <span class="lang">custom_tools.py</span>
+      </div>
+      <div class="code-body" id="tools-code"></div>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        <span>tool-session</span>
+      </div>
+      <div class="terminal-body" id="tools-out"><span class="dim">Run a session that uses custom tools...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="runToolDemo()">&#128295; Run With Tools</button>
+      <button class="btn btn-outline" onclick="showToolList()">&#128203; List All Tools</button>
+    </div>
+  </div>
+
+  <!-- 5. Permissions -->
+  <div class="card orange">
+    <h2><span class="icon">&#128274;</span> Permissions &amp; Safety</h2>
+    <p class="desc">Control what Claude can do with <code>permission_mode</code> and the <code>can_use_tool</code> callback. Your app decides in real time whether to allow, deny, or modify each tool call.</p>
+    <div class="code-block">
+      <div class="code-bar">
+        <div class="dots">
+          <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        </div>
+        <span class="lang">permissions.py</span>
+      </div>
+      <div class="code-body" id="perms-code"></div>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        <span>permissions</span>
+      </div>
+      <div class="terminal-body" id="perms-out"><span class="dim">Try different permission modes...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-orange" onclick="runPermsDemo('default')">&#128274; Default Mode</button>
+      <button class="btn btn-orange" onclick="runPermsDemo('bypass')">&#9889; Bypass Mode</button>
+      <button class="btn btn-orange" onclick="runPermsDemo('custom')">&#128736; Custom can_use_tool</button>
+    </div>
+  </div>
+
+  <!-- 6. GUI Bridge Demo -->
+  <div class="card blue">
+    <h2><span class="icon">&#128421;</span> GUI App Bridge</h2>
+    <p class="desc">Bridge a GUI app into an SDK session. Your app sends a task, streams events, and shows live progress. The SDK handles tool orchestration while your UI reacts to each message.</p>
+    <div class="gui-panel">
+      <div class="gui-titlebar">
+        <div class="dots">
+          <div class="dot-ctrl"></div>
+          <div class="dot-ctrl"></div>
+          <div class="dot-ctrl"></div>
+        </div>
+        <span>My App &mdash; Claude SDK Integration</span>
+      </div>
+      <div class="gui-body">
+        <div class="gui-input-row">
+          <input class="gui-input" id="gui-prompt" type="text" placeholder="Describe a task for Claude..." value="Add a dark mode toggle to the settings page">
+          <button class="btn btn-blue" id="gui-send-btn" onclick="runGuiDemo()">&#9654; Send</button>
+        </div>
+        <div class="gui-log" id="gui-log">
+          <span class="log-dim">Waiting for a task...</span>
+        </div>
+        <div class="gui-status">
+          <div class="status-dot" id="gui-status-dot"></div>
+          <span id="gui-status-text">Idle</span>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="runGuiDemo()">&#128421; Launch Task</button>
+      <button class="btn btn-outline" onclick="showGuiCode()">&#128196; View Source</button>
+    </div>
+  </div>
+
+  <!-- 7. Multi-turn & ClaudeSDKClient -->
+  <div class="card red">
+    <h2><span class="icon">&#128257;</span> Multi-turn with ClaudeSDKClient</h2>
+    <p class="desc">Use <code>ClaudeSDKClient</code> for multi-turn conversations that maintain context. Unlike <code>query()</code> which starts fresh each time, the client keeps the session alive across multiple exchanges.</p>
+    <div class="code-block">
+      <div class="code-bar">
+        <div class="dots">
+          <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        </div>
+        <span class="lang">multi_turn.py</span>
+      </div>
+      <div class="code-body" id="resume-code"></div>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
+        <span>multi-turn</span>
+      </div>
+      <div class="terminal-body" id="resume-out"><span class="dim">Try a multi-turn conversation...</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="runMultiTurn()">&#128172; Multi-turn Chat</button>
+      <button class="btn btn-outline" onclick="runResumeDemo()">&#128257; Resume Session</button>
+    </div>
+  </div>
+
+  <!-- 8. Score -->
+  <div class="card purple">
+    <h2><span class="icon">&#127942;</span> Your SDK Score</h2>
+    <p class="desc">Complete each section to fill the bar and earn your SDK Master badge!</p>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%">0%</div>
+    </div>
+    <div class="score-display">
+      <div class="score-num" id="score-num">0 / 7</div>
+      <div class="score-label">sections completed</div>
+    </div>
+    <div id="badges-row" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center;"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ──────────────────────────────────────
+const completed = new Set();
+const TOTAL = 7;
+
+// ─── Helpers ────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+
+function setTerm(id, html) {
+  const el = $(id);
+  el.innerHTML = html;
+  el.scrollTop = el.scrollHeight;
+}
+
+function appendTerm(id, html) {
+  const el = $(id);
+  el.innerHTML += html;
+  el.scrollTop = el.scrollHeight;
+}
+
+function pr(cmd) {
+  return `<span class="prompt">$ </span><span class="cmd">${esc(cmd)}</span>\n`;
+}
+
+function spin() {
+  return `<span class="dim"><span class="spinner"></span> Running...</span>\n`;
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function markDone(key) {
+  if (completed.has(key)) return;
+  completed.add(key);
+  updateScore();
+  toast('\u2705 Section complete: ' + key);
+  if (completed.size === TOTAL) {
+    setTimeout(() => { launchConfetti(); toast('\uD83C\uDF89 ALL DONE! You are an SDK Master!'); }, 600);
+  }
+}
+
+function updateScore() {
+  const pct = Math.round((completed.size / TOTAL) * 100);
+  $('progress-bar').style.width = pct + '%';
+  $('progress-bar').textContent = pct + '%';
+  $('score-num').textContent = completed.size + ' / ' + TOTAL;
+
+  const row = $('badges-row');
+  row.innerHTML = '';
+  const names = ['Install','Query','Streaming','Tools','Permissions','GUI Bridge','Multi-turn'];
+  const keys  = ['install','query','stream','tools','perms','gui','resume'];
+  keys.forEach((k, i) => {
+    const done = completed.has(k);
+    const b = document.createElement('span');
+    b.className = 'badge ' + (done ? 'badge-success' : 'badge-info');
+    b.textContent = (done ? '\u2705 ' : '\u2B1C ') + names[i];
+    row.appendChild(b);
+  });
+}
+
+// ─── Python syntax highlight ────────────────────
+function hi(code) {
+  return code
+    .replace(/#[^\n]*/g, m => `<span class="comment">${m}</span>`)
+    .replace(/"""[\s\S]*?"""/g, m => `<span class="str">${m}</span>`)
+    .replace(/\b(import|from|async|await|for|def|if|elif|else|return|class|as|in|with|None|True|False|try|except|yield|pass)\b/g, '<span class="kw">$1</span>')
+    .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="str">"$1"</span>')
+    .replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, "<span class=\"str\">'$1'</span>")
+    .replace(/f"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="str">f"$1"</span>')
+    .replace(/\b(query|tool|create_sdk_mcp_server|list_sessions|print|isinstance|hasattr)\b/g, '<span class="fn">$1</span>')
+    .replace(/\b(ClaudeAgentOptions|ClaudeSDKClient|AssistantMessage|ResultMessage|SystemMessage|UserMessage|TextBlock|ToolUseBlock|StreamEvent|PermissionResultAllow|PermissionResultDeny|ToolPermissionContext)\b/g, '<span class="type">$1</span>')
+    .replace(/@(tool|dataclass)/g, '<span class="dec">@$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+}
+
+// ─── Populate code blocks ───────────────────────
+function initCodeBlocks() {
+  // Basic query
+  $('query-code').innerHTML = hi(
+`import asyncio
+from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk import AssistantMessage, ResultMessage
+
+
+async def main():
+    options = ClaudeAgentOptions(
+        cwd="/my/project",
+        permission_mode="acceptEdits",
+        allowed_tools=["Read", "Write", "Edit", "Bash", "Glob"],
+        system_prompt={
+            "type": "preset",
+            "preset": "claude_code",
+        },
+        max_turns=10,
+    )
+
+    # Stream messages as they arrive
+    async for message in query(
+        prompt="Create a hello world Express server",
+        options=options,
+    ):
+        if isinstance(message, AssistantMessage):
+            for block in message.content:
+                if hasattr(block, "text"):
+                    print(block.text)
+                elif hasattr(block, "name"):
+                    print(f"Tool: {block.name}")
+
+        elif isinstance(message, ResultMessage):
+            print(f"Done! Cost: \${message.total_cost_usd}")
+
+
+asyncio.run(main())`);
+
+  // Stream code
+  $('stream-code').innerHTML = hi(
+`from claude_agent_sdk import (
+    AssistantMessage, UserMessage,
+    SystemMessage, ResultMessage,
+)
+from claude_agent_sdk.types import StreamEvent
+
+async for msg in query(prompt="Build a REST API", options=options):
+
+    if isinstance(msg, SystemMessage):
+        # Init: tools, model, session info
+        print(f"Session started: {msg.data.get('session_id')}")
+        print(f"Tools: {msg.data.get('tools')}")
+
+    elif isinstance(msg, AssistantMessage):
+        # Claude's text + tool_use blocks
+        for block in msg.content:
+            if hasattr(block, "text"):
+                show_text(block.text)
+            elif hasattr(block, "name"):
+                show_tool_call(block.name, block.input)
+
+    elif isinstance(msg, UserMessage):
+        # Tool results flowing back
+        if msg.tool_use_result:
+            print(f"Tool result: {msg.tool_use_result}")
+
+    elif isinstance(msg, ResultMessage):
+        # Session complete
+        print(f"Turns: {msg.num_turns}")
+        print(f"Cost: \${msg.total_cost_usd}")`);
+
+  // Tools code
+  $('tools-code').innerHTML = hi(
+`from claude_agent_sdk import query, tool, create_sdk_mcp_server
+from claude_agent_sdk import ClaudeAgentOptions
+from typing import Any
+
+
+# Define custom tools with the @tool decorator
+@tool("get_weather", "Fetch current weather for a city", {"city": str, "units": str})
+async def get_weather(args: dict[str, Any]) -> dict[str, Any]:
+    data = await fetch_weather_api(args["city"], args["units"])
+    return {"content": [{"type": "text", "text": json.dumps(data)}]}
+
+
+@tool("notify_user", "Show a notification in the app UI", {"title": str, "body": str})
+async def notify_user(args: dict[str, Any]) -> dict[str, Any]:
+    show_app_notification(args["title"], args["body"])
+    return {"content": [{"type": "text", "text": "Notification sent"}]}
+
+
+# Bundle tools into an in-process MCP server
+server = create_sdk_mcp_server(
+    name="my-app-tools",
+    tools=[get_weather, notify_user],
+)
+
+# Pass the server to query
+async for message in query(
+    prompt="What's the weather in Tokyo? Notify me with the result.",
+    options=ClaudeAgentOptions(
+        mcp_servers={"my-app-tools": server},
+    ),
+):
+    print(message)`);
+
+  // Permissions code
+  $('perms-code').innerHTML = hi(
+`from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk.types import (
+    PermissionResultAllow,
+    PermissionResultDeny,
+    ToolPermissionContext,
+)
+
+
+async def custom_permission_handler(
+    tool_name: str, input_data: dict, context: ToolPermissionContext
+):
+    """Custom logic for tool permissions."""
+
+    if tool_name == "Bash":
+        ok = await show_confirm_dialog(
+            f"Claude wants to run: {input_data.get('command')}"
+        )
+        if ok:
+            return PermissionResultAllow(updated_input=input_data)
+        return PermissionResultDeny(message="User declined")
+
+    # Allow reads and edits automatically
+    return PermissionResultAllow(updated_input=input_data)
+
+
+options = ClaudeAgentOptions(
+    can_use_tool=custom_permission_handler,
+    allowed_tools=["Read", "Write", "Edit", "Bash"],
+)`);
+
+  // Multi-turn / ClaudeSDKClient code
+  $('resume-code').innerHTML = hi(
+`import asyncio
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+from claude_agent_sdk import AssistantMessage, TextBlock, ResultMessage
+
+
+async def main():
+    options = ClaudeAgentOptions(
+        allowed_tools=["Read", "Write", "Edit", "Glob"],
+        permission_mode="acceptEdits",
+    )
+
+    # ClaudeSDKClient maintains context across exchanges
+    async with ClaudeSDKClient(options=options) as client:
+        # First question
+        await client.query("Create a React todo list component")
+
+        async for message in client.receive_response():
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        print(f"Claude: {block.text}")
+
+        # Follow-up - session retains previous context!
+        await client.query("Now add drag-and-drop reordering")
+
+        async for message in client.receive_response():
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        print(f"Claude: {block.text}")
+
+        # Can also interrupt a long-running task
+        # await client.interrupt()
+
+
+asyncio.run(main())`);
+}
+
+// ─── 1. Install ─────────────────────────────────
+async function runInstall() {
+  const id = 'install-out';
+  setTerm(id, pr('pip install claude-agent-sdk') + spin());
+  await wait(rand(600, 1000));
+
+  let h = pr('pip install claude-agent-sdk');
+  h += `<span class="out">Collecting claude-agent-sdk</span>\n`;
+  h += `<span class="out">  Downloading claude_agent_sdk-0.1.${rand(40,50)}-py3-none-any.whl (${rand(2,4)}.${rand(1,9)} MB)</span>\n`;
+  setTerm(id, h);
+  await wait(rand(400, 700));
+
+  h += `<span class="out">Installing collected packages: claude-agent-sdk</span>\n`;
+  h += `<span class="ok">Successfully installed claude-agent-sdk-0.1.${rand(40,50)}</span>\n\n`;
+  setTerm(id, h);
+  await wait(rand(300, 500));
+
+  h += pr('python3 -c "import claude_agent_sdk; print(claude_agent_sdk.__version__)"');
+  setTerm(id, h + spin());
+  await wait(rand(300, 600));
+
+  h += `<span class="ok">0.1.${rand(40,50)}</span>\n\n`;
+  h += `<span class="ok">\u2705 SDK installed and ready!</span>\n`;
+  setTerm(id, h);
+  markDone('install');
+}
+
+async function showImports() {
+  const id = 'install-out';
+  let h = `<span class="info"># Main exports from the SDK:</span>\n\n`;
+  const imports = [
+    ['query', 'claude_agent_sdk', 'Send a prompt, get an async iterator of messages'],
+    ['ClaudeSDKClient', 'claude_agent_sdk', 'Multi-turn client that maintains session context'],
+    ['ClaudeAgentOptions', 'claude_agent_sdk', 'Configuration dataclass for all options'],
+    ['tool', 'claude_agent_sdk', 'Decorator to define custom MCP tools'],
+    ['create_sdk_mcp_server', 'claude_agent_sdk', 'Bundle tools into an in-process MCP server'],
+    ['list_sessions', 'claude_agent_sdk', 'Discover and list past sessions'],
+    ['AssistantMessage', 'claude_agent_sdk', "Claude's response with content blocks"],
+    ['ResultMessage', 'claude_agent_sdk', 'Final result with cost, usage, and duration'],
+    ['TextBlock, ToolUseBlock', 'claude_agent_sdk', 'Content block types for parsing responses'],
+  ];
+  for (const [name, mod, desc] of imports) {
+    h += `<span class="kw">from</span> <span class="type">${mod}</span> <span class="kw">import</span> <span class="fn">${name}</span>\n`;
+    h += `<span class="dim"># ${desc}</span>\n\n`;
+    setTerm(id, h);
+    await wait(rand(200, 400));
+  }
+  h += `<span class="ok">\u2705 These are the core building blocks!</span>\n`;
+  setTerm(id, h);
+  markDone('install');
+}
+
+// ─── 2. Basic Query ─────────────────────────────
+async function runBasicQuery() {
+  const id = 'query-out';
+  setTerm(id, `<span class="info">\u25B6 python3 agent.py</span>\n\n`);
+  await wait(rand(400, 700));
+
+  appendTerm(id, `<span class="log-system">[SystemMessage]</span> <span class="dim">Session initialized</span>\n`);
+  appendTerm(id, `<span class="dim">  model: claude-sonnet-4-20250514</span>\n`);
+  appendTerm(id, `<span class="dim">  tools: Read, Write, Edit, Bash, Glob</span>\n\n`);
+  await wait(rand(300, 600));
+
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll create a simple Express server for you.\n\n`);
+  await wait(rand(400, 700));
+
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">Write</span>\n`);
+  appendTerm(id, `<span class="dim">  file_path: "/my/project/server.js"</span>\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="ok">[UserMessage]</span> <span class="dim">tool_result: File written successfully</span>\n\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> Now let me install Express and test it.\n\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">Bash</span>\n`);
+  appendTerm(id, `<span class="dim">  command: "npm init -y && npm install express"</span>\n`);
+  await wait(rand(500, 800));
+
+  appendTerm(id, `<span class="ok">[UserMessage]</span> <span class="dim">tool_result: added 64 packages in 2.1s</span>\n\n`);
+  await wait(rand(200, 400));
+
+  appendTerm(id, `<span class="ok">[ResultMessage]</span> <span class="ok">\u2705 subtype: success</span>\n`);
+  appendTerm(id, `<span class="dim">  num_turns: 3  |  total_cost_usd: $0.012  |  duration_ms: ${rand(8000,14000)}</span>\n`);
+  markDone('query');
+}
+
+async function runQueryWithOptions() {
+  const id = 'query-out';
+  setTerm(id, '');
+  const opts = [
+    ['cwd', '"/path/to/project"', 'Working directory for the session'],
+    ['model', '"claude-sonnet-4-20250514"', 'Which Claude model to use'],
+    ['max_turns', '15', 'Max conversation turns before stopping'],
+    ['max_budget_usd', '0.50', 'Spending cap in USD'],
+    ['permission_mode', '"acceptEdits"', 'Auto-accept file edits'],
+    ['system_prompt', '{"type": "preset", "preset": "claude_code"}', 'Use Claude Code system prompt'],
+    ['tools', '{"type": "preset", "preset": "claude_code"}', 'Use Claude Code default tools'],
+    ['allowed_tools', '["Read", "Write", "Grep"]', 'Restrict to specific tools'],
+    ['effort', '"high"', 'Controls thinking depth (low/medium/high/max)'],
+    ['resume', '"session-uuid"', 'Resume a previous session by ID'],
+    ['include_partial_messages', 'True', 'Enable StreamEvent for real-time streaming'],
+    ['mcp_servers', '{"calc": calculator_server}', 'Attach custom MCP tool servers'],
+    ['can_use_tool', 'my_permission_handler', 'Custom async permission callback'],
+  ];
+
+  let h = `<span class="info"># ClaudeAgentOptions fields:</span>\n\n`;
+  for (const [key, val, desc] of opts) {
+    h += `<span class="path">${key}</span> = <span class="str">${esc(val)}</span>\n`;
+    h += `<span class="dim"># ${desc}</span>\n\n`;
+    setTerm(id, h);
+    await wait(rand(120, 250));
+  }
+  h += `<span class="ok">\u2705 Full options reference loaded!</span>\n`;
+  setTerm(id, h);
+  markDone('query');
+}
+
+// ─── 3. Streaming Demo ─────────────────────────
+async function runStreamDemo() {
+  const id = 'stream-out';
+  setTerm(id, '');
+
+  const events = [
+    { type: 'SystemMessage', sub: 'init', detail: 'Session abc-123 initialized, model: claude-sonnet-4-20250514', delay: 300 },
+    { type: 'SystemMessage', sub: 'init', detail: 'tools: [Read, Write, Edit, Bash, Glob, Grep]', delay: 200 },
+    { type: 'AssistantMessage', sub: '', detail: "I'll help you build a REST API. Let me read the project structure.", delay: 600 },
+    { type: 'ToolUseBlock', sub: '', detail: 'Glob(pattern="src/**/*.py")', delay: 400 },
+    { type: 'UserMessage', sub: 'tool_result', detail: '["src/main.py", "src/routes.py", "src/db.py"]', delay: 500 },
+    { type: 'AssistantMessage', sub: '', detail: 'I see the project structure. Let me read the existing routes.', delay: 400 },
+    { type: 'ToolUseBlock', sub: '', detail: 'Read(file_path="src/routes.py")', delay: 400 },
+    { type: 'UserMessage', sub: 'tool_result', detail: '(file contents: 42 lines)', delay: 300 },
+    { type: 'AssistantMessage', sub: '', detail: "Now I'll add the new endpoints.", delay: 400 },
+    { type: 'ToolUseBlock', sub: '', detail: 'Edit(file_path="src/routes.py", ...)', delay: 500 },
+    { type: 'UserMessage', sub: 'tool_result', detail: 'File edited successfully', delay: 300 },
+    { type: 'ResultMessage', sub: 'success', detail: 'num_turns=4, total_cost_usd=0.018, duration_ms=11200', delay: 200 },
+  ];
+
+  const colors = {
+    SystemMessage: 'log-system',
+    AssistantMessage: 'info',
+    ToolUseBlock: 'type',
+    UserMessage: 'ok',
+    ResultMessage: 'path',
+  };
+
+  for (const ev of events) {
+    const label = ev.sub ? `${ev.type} (${ev.sub})` : ev.type;
+    const cls = colors[ev.type] || 'out';
+    appendTerm(id, `<span class="${cls}">[${label}]</span> <span class="out">${esc(ev.detail)}</span>\n`);
+    await wait(ev.delay + rand(100, 300));
+  }
+
+  appendTerm(id, `\n<span class="ok">\u2705 Stream complete! 12 messages yielded.</span>\n`);
+  markDone('stream');
+}
+
+// ─── 4. Tools Demo ──────────────────────────────
+async function runToolDemo() {
+  const id = 'tools-out';
+  setTerm(id, `<span class="info">\u25B6 Starting session with custom MCP tools...</span>\n\n`);
+  await wait(rand(400, 700));
+
+  appendTerm(id, `<span class="log-system">[SystemMessage]</span> <span class="dim">MCP server "my-app-tools" connected</span>\n`);
+  appendTerm(id, `<span class="dim">  Tools registered: get_weather, notify_user</span>\n\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll check the weather in Tokyo and notify you.\n\n`);
+  await wait(rand(400, 600));
+
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">mcp__my-app-tools__get_weather</span>\n`);
+  appendTerm(id, `<span class="dim">  {"city": "Tokyo", "units": "celsius"}</span>\n`);
+  await wait(rand(600, 1000));
+
+  appendTerm(id, `<span class="ok">[UserMessage: tool_result]</span>\n`);
+  appendTerm(id, `<span class="out">  {"temp": 22, "condition": "Partly Cloudy", "humidity": 65}</span>\n\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">mcp__my-app-tools__notify_user</span>\n`);
+  appendTerm(id, `<span class="dim">  {"title": "Weather Update", "body": "Tokyo: 22\u00B0C, Partly Cloudy"}</span>\n`);
+  await wait(rand(400, 600));
+
+  appendTerm(id, `<span class="ok">[UserMessage: tool_result]</span> <span class="dim">Notification sent</span>\n\n`);
+  await wait(rand(200, 400));
+
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> The weather in Tokyo is 22\u00B0C and Partly Cloudy.\n`);
+  appendTerm(id, `<span class="info">                  </span> I've sent a notification to your app!\n\n`);
+  appendTerm(id, `<span class="ok">[ResultMessage] \u2705 success  |  num_turns: 2  |  total_cost_usd: $0.008</span>\n`);
+
+  toast('\uD83D\uDD14 Weather Update: Tokyo 22\u00B0C');
+  markDone('tools');
+}
+
+async function showToolList() {
+  const id = 'tools-out';
+  setTerm(id, `<span class="info"># Built-in tools (from preset: "claude_code"):</span>\n\n`);
+
+  const tools = [
+    ['Read', 'Read file contents from disk'],
+    ['Write', 'Create or overwrite files'],
+    ['Edit', 'Make targeted edits to existing files'],
+    ['Bash', 'Execute shell commands'],
+    ['Glob', 'Find files by pattern matching'],
+    ['Grep', 'Search file contents with regex'],
+    ['Task', 'Launch sub-agent for complex tasks'],
+    ['WebFetch', 'Fetch and process web content'],
+    ['WebSearch', 'Search the web for information'],
+    ['TodoWrite', 'Track progress with a task list'],
+    ['NotebookEdit', 'Edit Jupyter notebook cells'],
+  ];
+
+  let h = $('tools-out').innerHTML;
+  for (const [name, desc] of tools) {
+    h += `<span class="fn">${name.padEnd(16)}</span> <span class="dim">${desc}</span>\n`;
+    setTerm(id, h);
+    await wait(rand(80, 180));
+  }
+
+  h += `\n<span class="info"># Custom tools (from your MCP server):</span>\n\n`;
+  h += `<span class="ok">get_weather      Fetch current weather for a city</span>\n`;
+  h += `<span class="ok">notify_user      Show a notification in the app UI</span>\n`;
+  h += `\n<span class="ok">\u2705 ${tools.length + 2} tools available in this session</span>\n`;
+  setTerm(id, h);
+  markDone('tools');
+}
+
+// ─── 5. Permissions Demo ────────────────────────
+async function runPermsDemo(mode) {
+  const id = 'perms-out';
+  setTerm(id, '');
+
+  if (mode === 'default') {
+    appendTerm(id, `<span class="info">\u25B6 permission_mode="default"</span>\n\n`);
+    await wait(300);
+    appendTerm(id, `<span class="out">[AssistantMessage] Let me edit the auth module...</span>\n\n`);
+    await wait(500);
+    appendTerm(id, `<span class="path">[permission_request]</span> <span class="out">Edit: src/auth.py</span>\n`);
+    appendTerm(id, `<span class="dim">  Claude wants to modify src/auth.py</span>\n`);
+    appendTerm(id, `<span class="dim">  Your can_use_tool callback must decide</span>\n\n`);
+    await wait(600);
+    appendTerm(id, `<span class="err">\u23F8 Session paused \u2014 waiting for user approval</span>\n\n`);
+    await wait(400);
+    appendTerm(id, `<span class="ok">\u2705 PermissionResultAllow returned</span>\n`);
+    appendTerm(id, `<span class="out">[UserMessage] tool_result: File edited successfully</span>\n`);
+
+  } else if (mode === 'bypass') {
+    appendTerm(id, `<span class="info">\u25B6 permission_mode="bypassPermissions"</span>\n`);
+    appendTerm(id, `<span class="path">\u26A0\uFE0F  Use for CI/CD and trusted automation only!</span>\n\n`);
+    await wait(300);
+    appendTerm(id, `<span class="out">[AssistantMessage] Editing auth module...</span>\n`);
+    await wait(300);
+    appendTerm(id, `<span class="ok">[ToolUseBlock] Edit: src/auth.py</span> <span class="dim">(auto-approved)</span>\n`);
+    await wait(200);
+    appendTerm(id, `<span class="ok">[ToolUseBlock] Bash: pytest</span> <span class="dim">(auto-approved)</span>\n`);
+    await wait(200);
+    appendTerm(id, `<span class="ok">[ToolUseBlock] Write: src/test_auth.py</span> <span class="dim">(auto-approved)</span>\n\n`);
+    await wait(300);
+    appendTerm(id, `<span class="ok">\u2705 All tools auto-approved in bypass mode</span>\n`);
+
+  } else {
+    appendTerm(id, `<span class="info">\u25B6 Custom can_use_tool callback</span>\n\n`);
+    await wait(300);
+
+    const calls = [
+      { tool: 'Read', input: 'src/auth.py', result: 'allow', reason: 'Reads are always safe' },
+      { tool: 'Edit', input: 'src/auth.py', result: 'allow', reason: 'Edits allowed by policy' },
+      { tool: 'Bash', input: 'rm -rf /', result: 'deny', reason: 'Dangerous command blocked!' },
+      { tool: 'Bash', input: 'pytest', result: 'allow', reason: 'Test commands are allowed' },
+      { tool: 'Write', input: '.env', result: 'deny', reason: 'Cannot write sensitive files' },
+    ];
+
+    for (const c of calls) {
+      appendTerm(id, `<span class="type">[can_use_tool]</span> <span class="fn">${c.tool}</span>(<span class="dim">${esc(c.input)}</span>)\n`);
+      await wait(rand(200, 400));
+
+      if (c.result === 'allow') {
+        appendTerm(id, `  <span class="ok">\u2705 PermissionResultAllow</span> <span class="dim">${c.reason}</span>\n\n`);
+      } else {
+        appendTerm(id, `  <span class="err">\u274C PermissionResultDeny</span> <span class="dim">${c.reason}</span>\n\n`);
+      }
+      await wait(rand(200, 400));
+    }
+    appendTerm(id, `<span class="ok">\u2705 Custom permission logic handled 5 tool calls</span>\n`);
+  }
+
+  markDone('perms');
+}
+
+// ─── 6. GUI Bridge Demo ────────────────────────
+async function runGuiDemo() {
+  const log = $('gui-log');
+  const dot = $('gui-status-dot');
+  const status = $('gui-status-text');
+  const btn = $('gui-send-btn');
+  const promptVal = $('gui-prompt').value || 'Add a dark mode toggle to the settings page';
+
+  log.innerHTML = '';
+  btn.disabled = true;
+  dot.className = 'status-dot active';
+  status.textContent = 'Connecting...';
+
+  const addLog = (cls, text) => {
+    log.innerHTML += `<span class="${cls}">${text}</span>\n`;
+    log.scrollTop = log.scrollHeight;
+  };
+
+  await wait(rand(300, 600));
+  addLog('log-system', '\u25B6 query(prompt="' + esc(promptVal) + '", options=options)');
+  addLog('log-dim', '  Initializing session...');
+  status.textContent = 'Initializing...';
+  await wait(rand(500, 900));
+
+  addLog('log-system', '\u2705 SystemMessage: session sid_' + Math.random().toString(36).slice(2,10));
+  addLog('log-dim', '  Model: claude-sonnet-4-20250514 | Tools: 13 loaded');
+  status.textContent = 'Working...';
+  await wait(rand(400, 700));
+
+  addLog('', '');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: I\'ll add a dark mode toggle. Let me check the settings page.');
+  await wait(rand(400, 600));
+
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Read(file_path="src/components/Settings.tsx")');
+  status.textContent = 'Reading Settings.tsx...';
+  await wait(rand(600, 900));
+
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (156 lines)');
+  await wait(rand(200, 400));
+
+  addLog('', '');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: I see the structure. Adding ThemeToggle component.');
+  await wait(rand(500, 800));
+
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Write(file_path="src/components/ThemeToggle.tsx")');
+  status.textContent = 'Creating ThemeToggle.tsx...';
+  await wait(rand(700, 1100));
+
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (created, 48 lines)');
+  await wait(rand(200, 400));
+
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Edit(file_path="src/components/Settings.tsx")');
+  status.textContent = 'Editing Settings.tsx...';
+  await wait(rand(600, 900));
+
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (added import + toggle)');
+  await wait(rand(200, 400));
+
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Edit(file_path="src/styles/theme.css")');
+  status.textContent = 'Adding dark mode CSS...';
+  await wait(rand(500, 800));
+
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (added CSS variables)');
+  await wait(rand(200, 400));
+
+  addLog('', '');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: Let me verify everything compiles.');
+  await wait(rand(300, 500));
+
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Bash(command="npm run build")');
+  status.textContent = 'Building project...';
+  await wait(rand(800, 1200));
+
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (build succeeded)');
+  await wait(rand(300, 500));
+
+  addLog('', '');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: Dark mode toggle is ready! Created ThemeToggle,');
+  addLog('log-assistant', '         added it to Settings, and set up CSS custom properties.');
+  await wait(rand(300, 500));
+
+  addLog('', '');
+  addLog('log-result', '\u2705 ResultMessage: success | num_turns=5 | total_cost_usd=$0.02' + rand(1,9) + ' | duration_ms=' + rand(8000,14000));
+
+  dot.className = 'status-dot done';
+  status.textContent = 'Complete';
+  btn.disabled = false;
+  markDone('gui');
+}
+
+function showGuiCode() {
+  const id = 'gui-log';
+  $(id).innerHTML = '';
+  const code = `<span class="log-dim"># How the GUI bridge works under the hood (Python):</span>
+
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> <span class="type">claude_agent_sdk</span> <span class="kw">import</span> <span class="fn">query</span>, <span class="type">ClaudeAgentOptions</span>
+<span class="kw">from</span> <span class="type">claude_agent_sdk</span> <span class="kw">import</span> (
+    <span class="type">AssistantMessage</span>, <span class="type">ResultMessage</span>, <span class="type">SystemMessage</span>,
+)
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">handle_task</span>(prompt: str):
+    update_ui(status=<span class="str">"connecting"</span>)
+
+    options = <span class="type">ClaudeAgentOptions</span>(
+        cwd=project_dir,
+        tools={<span class="str">"type"</span>: <span class="str">"preset"</span>, <span class="str">"preset"</span>: <span class="str">"claude_code"</span>},
+        system_prompt={<span class="str">"type"</span>: <span class="str">"preset"</span>, <span class="str">"preset"</span>: <span class="str">"claude_code"</span>},
+        permission_mode=<span class="str">"acceptEdits"</span>,
+    )
+
+    <span class="kw">async</span> <span class="kw">for</span> msg <span class="kw">in</span> <span class="fn">query</span>(prompt=prompt, options=options):
+        <span class="kw">if</span> <span class="fn">isinstance</span>(msg, <span class="type">SystemMessage</span>):
+            add_log(f<span class="str">"Session: {msg.data['session_id']}"</span>)
+
+        <span class="kw">elif</span> <span class="fn">isinstance</span>(msg, <span class="type">AssistantMessage</span>):
+            <span class="kw">for</span> block <span class="kw">in</span> msg.content:
+                <span class="kw">if</span> <span class="fn">hasattr</span>(block, <span class="str">"text"</span>):
+                    add_log(f<span class="str">"Claude: {block.text}"</span>)
+                <span class="kw">elif</span> <span class="fn">hasattr</span>(block, <span class="str">"name"</span>):
+                    add_log(f<span class="str">"Tool: {block.name}({block.input})"</span>)
+                    update_ui(status=f<span class="str">"Running {block.name}..."</span>)
+
+        <span class="kw">elif</span> <span class="fn">isinstance</span>(msg, <span class="type">ResultMessage</span>):
+            add_log(f<span class="str">"Done! Cost: \${msg.total_cost_usd}"</span>)
+            update_ui(status=<span class="str">"complete"</span>)`;
+  $(id).innerHTML = code;
+  markDone('gui');
+}
+
+// ─── 7. Multi-turn Demo ────────────────────────
+async function runMultiTurn() {
+  const id = 'resume-out';
+  setTerm(id, `<span class="info">\u25B6 Running ClaudeSDKClient multi-turn session...</span>\n\n`);
+  await wait(rand(400, 700));
+
+  appendTerm(id, `<span class="dim"># async with ClaudeSDKClient(options) as client:</span>\n\n`);
+  await wait(300);
+
+  appendTerm(id, `<span class="path">[turn 1]</span> <span class="out">client.query("Create a React component for a todo list")</span>\n`);
+  await wait(rand(400, 600));
+
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll create a TodoList component with add/remove.\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> Write: src/TodoList.tsx\n`);
+  await wait(rand(400, 700));
+
+  appendTerm(id, `<span class="ok">[ResultMessage]</span> <span class="dim">success (67 lines created)</span>\n\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="dim"># Session context retained across queries!</span>\n\n`);
+  await wait(rand(400, 600));
+
+  appendTerm(id, `<span class="path">[turn 2]</span> <span class="out">client.query("Now add drag-and-drop reordering")</span>\n`);
+  await wait(rand(400, 600));
+
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll add drag-and-drop using the HTML5 Drag API.\n`);
+  appendTerm(id, `<span class="dim">  (Claude remembers TodoList.tsx from turn 1!)</span>\n`);
+  await wait(rand(300, 500));
+
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> Edit: src/TodoList.tsx\n`);
+  await wait(rand(500, 800));
+
+  appendTerm(id, `<span class="ok">[ResultMessage]</span> <span class="dim">success (added drag handlers + state logic)</span>\n\n`);
+  await wait(rand(200, 400));
+
+  appendTerm(id, `<span class="ok">\u2705 Multi-turn complete  |  2 exchanges  |  total_cost_usd: $0.015</span>\n`);
+  appendTerm(id, `<span class="dim">  session_id: sid_${Math.random().toString(36).slice(2,10)}</span>\n`);
+  markDone('resume');
+}
+
+async function runResumeDemo() {
+  const id = 'resume-out';
+  setTerm(id, `<span class="info">\u25B6 Listing previous sessions with list_sessions()...</span>\n\n`);
+  await wait(rand(400, 700));
+
+  const sessions = [
+    { id: 'sid_' + Math.random().toString(36).slice(2,10), summary: 'Add dark mode toggle', date: '2 hours ago', branch: 'feat/dark-mode' },
+    { id: 'sid_' + Math.random().toString(36).slice(2,10), summary: 'Fix auth middleware bug', date: '5 hours ago', branch: 'fix/auth' },
+    { id: 'sid_' + Math.random().toString(36).slice(2,10), summary: 'Create todo list component', date: 'yesterday', branch: 'feat/todos' },
+  ];
+
+  let h = $('resume-out').innerHTML;
+  h += `<span class="fn">list_sessions</span>(dir=<span class="str">"/my/project"</span>)\n\n`;
+  for (const s of sessions) {
+    h += `<span class="path">${s.id}</span>\n`;
+    h += `<span class="out">  summary: "${s.summary}"</span>\n`;
+    h += `<span class="dim">  ${s.date} \u2022 branch: ${s.branch}</span>\n\n`;
+    setTerm(id, h);
+    await wait(rand(200, 400));
+  }
+
+  h += `<span class="info">\u25B6 Resuming with query(prompt=..., options=ClaudeAgentOptions(resume="${sessions[2].id}"))...</span>\n\n`;
+  setTerm(id, h);
+  await wait(rand(500, 800));
+
+  h += `<span class="ok">[SystemMessage]</span> <span class="dim">Session resumed with full context</span>\n`;
+  h += `<span class="out">  Previous: "Create todo list component" (3 turns)</span>\n\n`;
+  h += `<span class="path">[resumed]</span> <span class="out">prompt: "Now add unit tests for the TodoList"</span>\n\n`;
+  setTerm(id, h);
+  await wait(rand(400, 600));
+
+  h += `<span class="info">[AssistantMessage]</span> I remember the TodoList component. I'll add tests using pytest.\n\n`;
+  h += `<span class="type">[ToolUseBlock]</span> Write: src/test_todo_list.py\n`;
+  setTerm(id, h);
+  await wait(rand(400, 600));
+
+  h += `<span class="ok">[UserMessage]</span> <span class="dim">tool_result: Created test file (45 lines, 4 test cases)</span>\n\n`;
+  h += `<span class="ok">[ResultMessage] \u2705 success  |  total_cost_usd: $0.009</span>\n`;
+  setTerm(id, h);
+  markDone('resume');
+}
+
+// ─── Confetti ───────────────────────────────────
+function launchConfetti() {
+  const canvas = $('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = [];
+  const colors = ['#7c3aed','#ec4899','#2dd4bf','#fbbf24','#60a5fa','#fb923c','#34d399'];
+
+  for (let i = 0; i < 180; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vy: Math.random() * 3 + 2,
+      vx: (Math.random() - 0.5) * 2,
+      rot: Math.random() * 360,
+      rv: (Math.random() - 0.5) * 8,
+    });
+  }
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rot * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+      p.y += p.vy;
+      p.x += p.vx;
+      p.rot += p.rv;
+    });
+    frame++;
+    if (frame < 200) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+// ─── Init ───────────────────────────────────────
+initCodeBlocks();
+updateScore();
+</script>
+</body>
+</html>
