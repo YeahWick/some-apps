@@ -206,6 +206,7 @@
   .type { color: #2dd4bf; }
   .comment { color: #64748b; font-style: italic; }
   .num { color: #fbbf24; }
+  .dec { color: #fb923c; }
 
   .btn {
     display: inline-flex;
@@ -319,7 +320,6 @@
   }
   .score-label { color: #6b7280; font-size: 0.9rem; }
 
-  /* code block inside cards */
   .code-block {
     background: var(--terminal-bg);
     border-radius: 14px;
@@ -352,7 +352,6 @@
     white-space: pre;
   }
 
-  /* GUI simulation panel */
   .gui-panel {
     background: #f8fafc;
     border: 2px solid #e2e8f0;
@@ -508,7 +507,7 @@
 <header>
   <div class="mascot">&#129302;</div>
   <h1>Claude Code SDK Playground</h1>
-  <p>An interactive guide to building apps with the <strong>Claude Code SDK</strong> &mdash; send prompts, add custom tools, stream progress, and bridge a GUI into an agentic coding session!</p>
+  <p>An interactive guide to building apps with the <strong>Python Claude Agent SDK</strong> &mdash; send prompts, add custom tools, stream progress, and bridge a GUI into an agentic coding session!</p>
 </header>
 
 <div class="container">
@@ -516,7 +515,7 @@
   <!-- 1. Installation -->
   <div class="card purple">
     <h2><span class="icon">&#128230;</span> Installation &amp; Setup</h2>
-    <p class="desc">The SDK is an npm package called <code>@anthropic-ai/claude-agent-sdk</code>. Install it, then import <code>query</code> to start making calls.</p>
+    <p class="desc">The SDK is a Python package called <code>claude-agent-sdk</code>. Install it with pip, then import <code>query</code> to start making calls. Requires Python 3.10+.</p>
     <div class="terminal">
       <div class="terminal-bar">
         <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
@@ -533,13 +532,13 @@
   <!-- 2. Basic Query -->
   <div class="card teal">
     <h2><span class="icon">&#128172;</span> Sending a Prompt</h2>
-    <p class="desc">Use the <code>query()</code> function to send a prompt. It returns an async generator that streams <code>SDKMessage</code> events &mdash; assistant responses, tool calls, and a final result.</p>
+    <p class="desc">Use <code>query()</code> to send a prompt. It returns an async iterator that streams messages &mdash; <code>AssistantMessage</code>, <code>UserMessage</code> (tool results), and a final <code>ResultMessage</code>.</p>
     <div class="code-block">
       <div class="code-bar">
         <div class="dots">
           <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
         </div>
-        <span class="lang">basic-query.ts</span>
+        <span class="lang">agent.py</span>
       </div>
       <div class="code-body" id="query-code"></div>
     </div>
@@ -552,20 +551,20 @@
     </div>
     <div class="btn-row">
       <button class="btn btn-teal" onclick="runBasicQuery()">&#9654; Run Query</button>
-      <button class="btn btn-outline" onclick="runQueryWithOptions()">&#9881; With Options</button>
+      <button class="btn btn-outline" onclick="runQueryWithOptions()">&#9881; Show Options</button>
     </div>
   </div>
 
   <!-- 3. Streaming Messages -->
   <div class="card pink">
     <h2><span class="icon">&#127897;</span> Streaming Message Types</h2>
-    <p class="desc">The SDK emits many message types as it works. Your app reacts to each type differently &mdash; show text for <code>assistant</code>, animate tool calls for <code>user</code> (tool results), and finalize on <code>result</code>.</p>
+    <p class="desc">The SDK yields typed dataclass messages as Claude works. Use <code>isinstance()</code> to handle each one &mdash; show text from <code>AssistantMessage</code>, track tool calls from <code>ToolUseBlock</code>, and finalize on <code>ResultMessage</code>.</p>
     <div class="code-block">
       <div class="code-bar">
         <div class="dots">
           <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
         </div>
-        <span class="lang">message-types.ts</span>
+        <span class="lang">message_types.py</span>
       </div>
       <div class="code-body" id="stream-code"></div>
     </div>
@@ -584,13 +583,13 @@
   <!-- 4. Adding Tools -->
   <div class="card green">
     <h2><span class="icon">&#128295;</span> Adding Custom Tools</h2>
-    <p class="desc">Use <code>tool()</code> and <code>createSdkMcpServer()</code> to give Claude access to your app's functionality &mdash; databases, APIs, UI actions &mdash; anything you can wrap in a function.</p>
+    <p class="desc">Use the <code>@tool()</code> decorator and <code>create_sdk_mcp_server()</code> to give Claude access to your app &mdash; databases, APIs, UI actions &mdash; anything you can wrap in an async function.</p>
     <div class="code-block">
       <div class="code-bar">
         <div class="dots">
           <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
         </div>
-        <span class="lang">custom-tools.ts</span>
+        <span class="lang">custom_tools.py</span>
       </div>
       <div class="code-body" id="tools-code"></div>
     </div>
@@ -610,13 +609,13 @@
   <!-- 5. Permissions -->
   <div class="card orange">
     <h2><span class="icon">&#128274;</span> Permissions &amp; Safety</h2>
-    <p class="desc">Control what Claude can do with <code>permissionMode</code> and the <code>canUseTool</code> callback. Your app decides in real time whether to allow, deny, or modify each tool call.</p>
+    <p class="desc">Control what Claude can do with <code>permission_mode</code> and the <code>can_use_tool</code> callback. Your app decides in real time whether to allow, deny, or modify each tool call.</p>
     <div class="code-block">
       <div class="code-bar">
         <div class="dots">
           <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
         </div>
-        <span class="lang">permissions.ts</span>
+        <span class="lang">permissions.py</span>
       </div>
       <div class="code-body" id="perms-code"></div>
     </div>
@@ -630,14 +629,14 @@
     <div class="btn-row">
       <button class="btn btn-orange" onclick="runPermsDemo('default')">&#128274; Default Mode</button>
       <button class="btn btn-orange" onclick="runPermsDemo('bypass')">&#9889; Bypass Mode</button>
-      <button class="btn btn-orange" onclick="runPermsDemo('custom')">&#128736; Custom canUseTool</button>
+      <button class="btn btn-orange" onclick="runPermsDemo('custom')">&#128736; Custom can_use_tool</button>
     </div>
   </div>
 
   <!-- 6. GUI Bridge Demo -->
   <div class="card blue">
     <h2><span class="icon">&#128421;</span> GUI App Bridge</h2>
-    <p class="desc">This is the real magic &mdash; bridge a GUI app into an SDK session. Your app sends a task, streams events, and shows live progress. Try it below!</p>
+    <p class="desc">Bridge a GUI app into an SDK session. Your app sends a task, streams events, and shows live progress. The SDK handles tool orchestration while your UI reacts to each message.</p>
     <div class="gui-panel">
       <div class="gui-titlebar">
         <div class="dots">
@@ -667,16 +666,16 @@
     </div>
   </div>
 
-  <!-- 7. Multi-turn & Resume -->
+  <!-- 7. Multi-turn & ClaudeSDKClient -->
   <div class="card red">
-    <h2><span class="icon">&#128257;</span> Multi-turn &amp; Session Resume</h2>
-    <p class="desc">Use streaming input for multi-turn conversations, or <code>resume</code> a previous session by ID. Your app can maintain context across multiple interactions.</p>
+    <h2><span class="icon">&#128257;</span> Multi-turn with ClaudeSDKClient</h2>
+    <p class="desc">Use <code>ClaudeSDKClient</code> for multi-turn conversations that maintain context. Unlike <code>query()</code> which starts fresh each time, the client keeps the session alive across multiple exchanges.</p>
     <div class="code-block">
       <div class="code-bar">
         <div class="dots">
           <div class="terminal-dot r"></div><div class="terminal-dot y"></div><div class="terminal-dot g"></div>
         </div>
-        <span class="lang">multi-turn.ts</span>
+        <span class="lang">multi_turn.py</span>
       </div>
       <div class="code-body" id="resume-code"></div>
     </div>
@@ -778,201 +777,222 @@ function updateScore() {
   });
 }
 
-// ─── Syntax highlight helper ────────────────────
+// ─── Python syntax highlight ────────────────────
 function hi(code) {
   return code
-    .replace(/\/\/.*/g, m => `<span class="comment">${m}</span>`)
-    .replace(/\b(import|from|const|let|async|for await|await|function|if|else|switch|case|break|return|new|of|type)\b/g, '<span class="kw">$1</span>')
-    .replace(/"([^"]*)"/g, '<span class="str">"$1"</span>')
-    .replace(/'([^']*)'/g, '<span class="str">\'$1\'</span>')
-    .replace(/`([^`]*)`/g, '<span class="str">`$1`</span>')
-    .replace(/\b(query|tool|createSdkMcpServer|listSessions|console\.log)\b/g, '<span class="fn">$1</span>')
-    .replace(/\b(SDKMessage|Options|Query|McpServerConfig|PermissionResult)\b/g, '<span class="type">$1</span>')
-    .replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+    .replace(/#[^\n]*/g, m => `<span class="comment">${m}</span>`)
+    .replace(/"""[\s\S]*?"""/g, m => `<span class="str">${m}</span>`)
+    .replace(/\b(import|from|async|await|for|def|if|elif|else|return|class|as|in|with|None|True|False|try|except|yield|pass)\b/g, '<span class="kw">$1</span>')
+    .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="str">"$1"</span>')
+    .replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, "<span class=\"str\">'$1'</span>")
+    .replace(/f"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="str">f"$1"</span>')
+    .replace(/\b(query|tool|create_sdk_mcp_server|list_sessions|print|isinstance|hasattr)\b/g, '<span class="fn">$1</span>')
+    .replace(/\b(ClaudeAgentOptions|ClaudeSDKClient|AssistantMessage|ResultMessage|SystemMessage|UserMessage|TextBlock|ToolUseBlock|StreamEvent|PermissionResultAllow|PermissionResultDeny|ToolPermissionContext)\b/g, '<span class="type">$1</span>')
+    .replace(/@(tool|dataclass)/g, '<span class="dec">@$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
 }
 
 // ─── Populate code blocks ───────────────────────
 function initCodeBlocks() {
   // Basic query
   $('query-code').innerHTML = hi(
-`import { query } from "@anthropic-ai/claude-agent-sdk";
+`import asyncio
+from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk import AssistantMessage, ResultMessage
 
-const conversation = query({
-  prompt: "Create a hello world Express server",
-  options: {
-    cwd: "/my/project",
-    permissionMode: "bypassPermissions",
-    allowDangerouslySkipPermissions: true,
-    tools: { type: "preset", preset: "claude_code" },
-    systemPrompt: {
-      type: "preset",
-      preset: "claude_code"
-    },
-    maxTurns: 10,
-  },
-});
 
-// Stream messages as they arrive
-for await (const message of conversation) {
-  if (message.type === "assistant") {
-    // Claude's response with text and tool calls
-    console.log("Assistant:", message.message.content);
-  } else if (message.type === "result") {
-    // Final result with cost, usage, and duration
-    console.log("Done!", message.result);
-    console.log("Cost: $" + message.total_cost_usd);
-  }
-}`);
+async def main():
+    options = ClaudeAgentOptions(
+        cwd="/my/project",
+        permission_mode="acceptEdits",
+        allowed_tools=["Read", "Write", "Edit", "Bash", "Glob"],
+        system_prompt={
+            "type": "preset",
+            "preset": "claude_code",
+        },
+        max_turns=10,
+    )
+
+    # Stream messages as they arrive
+    async for message in query(
+        prompt="Create a hello world Express server",
+        options=options,
+    ):
+        if isinstance(message, AssistantMessage):
+            for block in message.content:
+                if hasattr(block, "text"):
+                    print(block.text)
+                elif hasattr(block, "name"):
+                    print(f"Tool: {block.name}")
+
+        elif isinstance(message, ResultMessage):
+            print(f"Done! Cost: \${message.total_cost_usd}")
+
+
+asyncio.run(main())`);
 
   // Stream code
   $('stream-code').innerHTML = hi(
-`for await (const msg of conversation) {
-  switch (msg.type) {
-    case "system":     // Init: tools, model, session info
-      console.log("Session started:", msg.session_id);
-      console.log("Tools:", msg.tools);
-      break;
+`from claude_agent_sdk import (
+    AssistantMessage, UserMessage,
+    SystemMessage, ResultMessage,
+)
+from claude_agent_sdk.types import StreamEvent
 
-    case "assistant":  // Claude's text + tool_use blocks
-      for (const block of msg.message.content) {
-        if (block.type === "text")
-          showText(block.text);
-        if (block.type === "tool_use")
-          showToolCall(block.name, block.input);
-      }
-      break;
+async for msg in query(prompt="Build a REST API", options=options):
 
-    case "user":       // Tool results flowing back
-      console.log("Tool result:", msg.tool_use_result);
-      break;
+    if isinstance(msg, SystemMessage):
+        # Init: tools, model, session info
+        print(f"Session started: {msg.data.get('session_id')}")
+        print(f"Tools: {msg.data.get('tools')}")
 
-    case "result":     // Session complete
-      console.log("Turns:", msg.num_turns);
-      console.log("Cost:", msg.total_cost_usd);
-      break;
-  }
-}`);
+    elif isinstance(msg, AssistantMessage):
+        # Claude's text + tool_use blocks
+        for block in msg.content:
+            if hasattr(block, "text"):
+                show_text(block.text)
+            elif hasattr(block, "name"):
+                show_tool_call(block.name, block.input)
+
+    elif isinstance(msg, UserMessage):
+        # Tool results flowing back
+        if msg.tool_use_result:
+            print(f"Tool result: {msg.tool_use_result}")
+
+    elif isinstance(msg, ResultMessage):
+        # Session complete
+        print(f"Turns: {msg.num_turns}")
+        print(f"Cost: \${msg.total_cost_usd}")`);
 
   // Tools code
   $('tools-code').innerHTML = hi(
-`import { query, tool, createSdkMcpServer } from "@anthropic-ai/claude-agent-sdk";
-import { z } from "zod";
+`from claude_agent_sdk import query, tool, create_sdk_mcp_server
+from claude_agent_sdk import ClaudeAgentOptions
+from typing import Any
 
-// Define a custom tool with Zod schema
-const getWeather = tool(
-  "get_weather",
-  "Fetch current weather for a city",
-  { city: z.string(), units: z.enum(["celsius", "fahrenheit"]) },
-  async ({ city, units }) => {
-    const data = await fetchWeatherAPI(city, units);
-    return { content: [{ type: "text", text: JSON.stringify(data) }] };
-  }
-);
 
-const notifyUser = tool(
-  "notify_user",
-  "Show a notification in the app UI",
-  { title: z.string(), body: z.string(), level: z.enum(["info","warn","error"]) },
-  async ({ title, body, level }) => {
-    showAppNotification(title, body, level);
-    return { content: [{ type: "text", text: "Notification sent" }] };
-  }
-);
+# Define custom tools with the @tool decorator
+@tool("get_weather", "Fetch current weather for a city", {"city": str, "units": str})
+async def get_weather(args: dict[str, Any]) -> dict[str, Any]:
+    data = await fetch_weather_api(args["city"], args["units"])
+    return {"content": [{"type": "text", "text": json.dumps(data)}]}
 
-// Bundle tools into an in-process MCP server
-const server = createSdkMcpServer({
-  name: "my-app-tools",
-  tools: [getWeather, notifyUser],
-});
 
-// Pass the server to query
-const conversation = query({
-  prompt: "What's the weather in Tokyo? Notify me with the result.",
-  options: {
-    mcpServers: { "my-app-tools": server },
-  },
-});`);
+@tool("notify_user", "Show a notification in the app UI", {"title": str, "body": str})
+async def notify_user(args: dict[str, Any]) -> dict[str, Any]:
+    show_app_notification(args["title"], args["body"])
+    return {"content": [{"type": "text", "text": "Notification sent"}]}
+
+
+# Bundle tools into an in-process MCP server
+server = create_sdk_mcp_server(
+    name="my-app-tools",
+    tools=[get_weather, notify_user],
+)
+
+# Pass the server to query
+async for message in query(
+    prompt="What's the weather in Tokyo? Notify me with the result.",
+    options=ClaudeAgentOptions(
+        mcp_servers={"my-app-tools": server},
+    ),
+):
+    print(message)`);
 
   // Permissions code
   $('perms-code').innerHTML = hi(
-`const conversation = query({
-  prompt: "Refactor the auth module",
-  options: {
-    // Option 1: Use a preset permission mode
-    permissionMode: "acceptEdits",
+`from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk.types import (
+    PermissionResultAllow,
+    PermissionResultDeny,
+    ToolPermissionContext,
+)
 
-    // Option 2: Custom permission callback
-    canUseTool: async (toolName, input, { signal }) => {
-      if (toolName === "Bash") {
-        const ok = await showConfirmDialog(
-          "Claude wants to run: " + input.command
-        );
-        return ok
-          ? { behavior: "allow" }
-          : { behavior: "deny", message: "User declined" };
-      }
-      // Allow reads and edits automatically
-      return { behavior: "allow" };
-    },
-  },
-});`);
 
-  // Resume code
+async def custom_permission_handler(
+    tool_name: str, input_data: dict, context: ToolPermissionContext
+):
+    """Custom logic for tool permissions."""
+
+    if tool_name == "Bash":
+        ok = await show_confirm_dialog(
+            f"Claude wants to run: {input_data.get('command')}"
+        )
+        if ok:
+            return PermissionResultAllow(updated_input=input_data)
+        return PermissionResultDeny(message="User declined")
+
+    # Allow reads and edits automatically
+    return PermissionResultAllow(updated_input=input_data)
+
+
+options = ClaudeAgentOptions(
+    can_use_tool=custom_permission_handler,
+    allowed_tools=["Read", "Write", "Edit", "Bash"],
+)`);
+
+  // Multi-turn / ClaudeSDKClient code
   $('resume-code').innerHTML = hi(
-`import { query, listSessions } from "@anthropic-ai/claude-agent-sdk";
+`import asyncio
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+from claude_agent_sdk import AssistantMessage, TextBlock, ResultMessage
 
-// List past sessions
-const sessions = await listSessions({ dir: "/my/project", limit: 5 });
-for (const s of sessions) {
-  console.log(s.summary, new Date(s.lastModified));
-}
 
-// Resume a previous session
-const resumed = query({
-  prompt: "Now add unit tests for the changes you made",
-  options: {
-    resume: sessions[0].sessionId,
-  },
-});
+async def main():
+    options = ClaudeAgentOptions(
+        allowed_tools=["Read", "Write", "Edit", "Glob"],
+        permission_mode="acceptEdits",
+    )
 
-// Multi-turn with streaming input
-async function* chatStream() {
-  yield { type: "user", session_id: "", message: {
-    role: "user",
-    content: "Create a React component for a todo list"
-  }, parent_tool_use_id: null };
+    # ClaudeSDKClient maintains context across exchanges
+    async with ClaudeSDKClient(options=options) as client:
+        # First question
+        await client.query("Create a React todo list component")
 
-  // Wait for user's next message...
-  const next = await getUserInput();
+        async for message in client.receive_response():
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        print(f"Claude: {block.text}")
 
-  yield { type: "user", session_id: "", message: {
-    role: "user",
-    content: next
-  }, parent_tool_use_id: null };
-}
+        # Follow-up - session retains previous context!
+        await client.query("Now add drag-and-drop reordering")
 
-const multiTurn = query({
-  prompt: chatStream(),
-});`);
+        async for message in client.receive_response():
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        print(f"Claude: {block.text}")
+
+        # Can also interrupt a long-running task
+        # await client.interrupt()
+
+
+asyncio.run(main())`);
 }
 
 // ─── 1. Install ─────────────────────────────────
 async function runInstall() {
   const id = 'install-out';
-  setTerm(id, pr('npm install @anthropic-ai/claude-agent-sdk') + spin());
+  setTerm(id, pr('pip install claude-agent-sdk') + spin());
   await wait(rand(600, 1000));
 
-  let h = pr('npm install @anthropic-ai/claude-agent-sdk');
-  h += `<span class="out">added 12 packages in 3.${rand(1,9)}s</span>\n\n`;
+  let h = pr('pip install claude-agent-sdk');
+  h += `<span class="out">Collecting claude-agent-sdk</span>\n`;
+  h += `<span class="out">  Downloading claude_agent_sdk-0.1.${rand(40,50)}-py3-none-any.whl (${rand(2,4)}.${rand(1,9)} MB)</span>\n`;
+  setTerm(id, h);
+  await wait(rand(400, 700));
+
+  h += `<span class="out">Installing collected packages: claude-agent-sdk</span>\n`;
+  h += `<span class="ok">Successfully installed claude-agent-sdk-0.1.${rand(40,50)}</span>\n\n`;
   setTerm(id, h);
   await wait(rand(300, 500));
 
-  h += pr('npm ls @anthropic-ai/claude-agent-sdk');
+  h += pr('python3 -c "import claude_agent_sdk; print(claude_agent_sdk.__version__)"');
   setTerm(id, h + spin());
-  await wait(rand(400, 700));
+  await wait(rand(300, 600));
 
-  h += `<span class="path">my-app@1.0.0 /home/user/my-app</span>\n`;
-  h += `<span class="ok">\u2514\u2500\u2500 @anthropic-ai/claude-agent-sdk@0.1.${rand(5,15)}</span>\n\n`;
+  h += `<span class="ok">0.1.${rand(40,50)}</span>\n\n`;
   h += `<span class="ok">\u2705 SDK installed and ready!</span>\n`;
   setTerm(id, h);
   markDone('install');
@@ -980,16 +1000,21 @@ async function runInstall() {
 
 async function showImports() {
   const id = 'install-out';
-  let h = `<span class="info">// Main exports from the SDK:</span>\n\n`;
+  let h = `<span class="info"># Main exports from the SDK:</span>\n\n`;
   const imports = [
-    ['query', 'Send prompts and stream responses'],
-    ['tool', 'Define custom MCP tools with Zod schemas'],
-    ['createSdkMcpServer', 'Bundle tools into an in-process MCP server'],
-    ['listSessions', 'Discover and list past sessions'],
+    ['query', 'claude_agent_sdk', 'Send a prompt, get an async iterator of messages'],
+    ['ClaudeSDKClient', 'claude_agent_sdk', 'Multi-turn client that maintains session context'],
+    ['ClaudeAgentOptions', 'claude_agent_sdk', 'Configuration dataclass for all options'],
+    ['tool', 'claude_agent_sdk', 'Decorator to define custom MCP tools'],
+    ['create_sdk_mcp_server', 'claude_agent_sdk', 'Bundle tools into an in-process MCP server'],
+    ['list_sessions', 'claude_agent_sdk', 'Discover and list past sessions'],
+    ['AssistantMessage', 'claude_agent_sdk', "Claude's response with content blocks"],
+    ['ResultMessage', 'claude_agent_sdk', 'Final result with cost, usage, and duration'],
+    ['TextBlock, ToolUseBlock', 'claude_agent_sdk', 'Content block types for parsing responses'],
   ];
-  for (const [name, desc] of imports) {
-    h += `<span class="kw">import</span> { <span class="fn">${name}</span> } <span class="kw">from</span> <span class="str">"@anthropic-ai/claude-agent-sdk"</span>;\n`;
-    h += `<span class="dim">  // ${desc}</span>\n\n`;
+  for (const [name, mod, desc] of imports) {
+    h += `<span class="kw">from</span> <span class="type">${mod}</span> <span class="kw">import</span> <span class="fn">${name}</span>\n`;
+    h += `<span class="dim"># ${desc}</span>\n\n`;
     setTerm(id, h);
     await wait(rand(200, 400));
   }
@@ -1001,41 +1026,36 @@ async function showImports() {
 // ─── 2. Basic Query ─────────────────────────────
 async function runBasicQuery() {
   const id = 'query-out';
-  setTerm(id, `<span class="info">\u25B6 Running query({ prompt: "Create a hello world Express server" })...</span>\n\n`);
+  setTerm(id, `<span class="info">\u25B6 python3 agent.py</span>\n\n`);
   await wait(rand(400, 700));
 
-  // system init
-  appendTerm(id, `<span class="log-system">[system]</span> <span class="dim">Session initialized</span>\n`);
+  appendTerm(id, `<span class="log-system">[SystemMessage]</span> <span class="dim">Session initialized</span>\n`);
   appendTerm(id, `<span class="dim">  model: claude-sonnet-4-20250514</span>\n`);
-  appendTerm(id, `<span class="dim">  tools: Read, Write, Edit, Bash, Glob, Grep</span>\n\n`);
+  appendTerm(id, `<span class="dim">  tools: Read, Write, Edit, Bash, Glob</span>\n\n`);
   await wait(rand(300, 600));
 
-  // assistant thinking
-  appendTerm(id, `<span class="info">[assistant]</span> I'll create a simple Express server for you.\n\n`);
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll create a simple Express server for you.\n\n`);
   await wait(rand(400, 700));
 
-  // tool call
-  appendTerm(id, `<span class="type">[tool_use]</span> <span class="fn">Write</span>\n`);
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">Write</span>\n`);
   appendTerm(id, `<span class="dim">  file_path: "/my/project/server.js"</span>\n`);
   await wait(rand(300, 500));
 
-  appendTerm(id, `<span class="ok">[tool_result]</span> <span class="dim">File written successfully</span>\n\n`);
+  appendTerm(id, `<span class="ok">[UserMessage]</span> <span class="dim">tool_result: File written successfully</span>\n\n`);
   await wait(rand(300, 500));
 
-  // another assistant message
-  appendTerm(id, `<span class="info">[assistant]</span> Now let me install Express and test it.\n\n`);
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> Now let me install Express and test it.\n\n`);
   await wait(rand(300, 500));
 
-  appendTerm(id, `<span class="type">[tool_use]</span> <span class="fn">Bash</span>\n`);
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">Bash</span>\n`);
   appendTerm(id, `<span class="dim">  command: "npm init -y && npm install express"</span>\n`);
   await wait(rand(500, 800));
 
-  appendTerm(id, `<span class="ok">[tool_result]</span> <span class="dim">added 64 packages in 2.1s</span>\n\n`);
+  appendTerm(id, `<span class="ok">[UserMessage]</span> <span class="dim">tool_result: added 64 packages in 2.1s</span>\n\n`);
   await wait(rand(200, 400));
 
-  // result
-  appendTerm(id, `<span class="ok">[result]</span> <span class="ok">\u2705 Success</span>\n`);
-  appendTerm(id, `<span class="dim">  turns: 3  |  cost: $0.012  |  duration: 8.${rand(1,9)}s</span>\n`);
+  appendTerm(id, `<span class="ok">[ResultMessage]</span> <span class="ok">\u2705 subtype: success</span>\n`);
+  appendTerm(id, `<span class="dim">  num_turns: 3  |  total_cost_usd: $0.012  |  duration_ms: ${rand(8000,14000)}</span>\n`);
   markDone('query');
 }
 
@@ -1045,22 +1065,25 @@ async function runQueryWithOptions() {
   const opts = [
     ['cwd', '"/path/to/project"', 'Working directory for the session'],
     ['model', '"claude-sonnet-4-20250514"', 'Which Claude model to use'],
-    ['maxTurns', '15', 'Max conversation turns before stopping'],
-    ['maxBudgetUsd', '0.50', 'Spending cap in USD'],
-    ['permissionMode', '"acceptEdits"', 'Auto-accept file edits'],
-    ['systemPrompt', '{ type: "preset", preset: "claude_code" }', 'Use Claude Code system prompt'],
-    ['tools', '{ type: "preset", preset: "claude_code" }', 'Use Claude Code default tools'],
-    ['allowedTools', '["Read", "Write", "Grep"]', 'Restrict to specific tools'],
-    ['effort', '"high"', 'Controls thinking depth'],
-    ['resume', '"session-uuid"', 'Resume a previous session'],
+    ['max_turns', '15', 'Max conversation turns before stopping'],
+    ['max_budget_usd', '0.50', 'Spending cap in USD'],
+    ['permission_mode', '"acceptEdits"', 'Auto-accept file edits'],
+    ['system_prompt', '{"type": "preset", "preset": "claude_code"}', 'Use Claude Code system prompt'],
+    ['tools', '{"type": "preset", "preset": "claude_code"}', 'Use Claude Code default tools'],
+    ['allowed_tools', '["Read", "Write", "Grep"]', 'Restrict to specific tools'],
+    ['effort', '"high"', 'Controls thinking depth (low/medium/high/max)'],
+    ['resume', '"session-uuid"', 'Resume a previous session by ID'],
+    ['include_partial_messages', 'True', 'Enable StreamEvent for real-time streaming'],
+    ['mcp_servers', '{"calc": calculator_server}', 'Attach custom MCP tool servers'],
+    ['can_use_tool', 'my_permission_handler', 'Custom async permission callback'],
   ];
 
-  let h = `<span class="info">// Available options for query():</span>\n\n`;
+  let h = `<span class="info"># ClaudeAgentOptions fields:</span>\n\n`;
   for (const [key, val, desc] of opts) {
-    h += `<span class="path">${key}</span>: <span class="str">${esc(val)}</span>\n`;
-    h += `<span class="dim">  // ${desc}</span>\n\n`;
+    h += `<span class="path">${key}</span> = <span class="str">${esc(val)}</span>\n`;
+    h += `<span class="dim"># ${desc}</span>\n\n`;
     setTerm(id, h);
-    await wait(rand(150, 300));
+    await wait(rand(120, 250));
   }
   h += `<span class="ok">\u2705 Full options reference loaded!</span>\n`;
   setTerm(id, h);
@@ -1073,35 +1096,36 @@ async function runStreamDemo() {
   setTerm(id, '');
 
   const events = [
-    { type: 'system', sub: 'init', detail: 'Session abc-123 initialized, model: claude-sonnet-4-20250514', delay: 300 },
-    { type: 'system', sub: 'init', detail: 'Tools: [Read, Write, Edit, Bash, Glob, Grep]', delay: 200 },
-    { type: 'assistant', sub: '', detail: 'I\'ll help you build a REST API. Let me start by reading the project structure.', delay: 600 },
-    { type: 'assistant', sub: 'tool_use', detail: 'Glob({ pattern: "src/**/*.ts" })', delay: 400 },
-    { type: 'user', sub: 'tool_result', detail: '["src/index.ts", "src/routes.ts", "src/db.ts"]', delay: 500 },
-    { type: 'assistant', sub: '', detail: 'I see the project structure. Let me read the existing routes.', delay: 400 },
-    { type: 'assistant', sub: 'tool_use', detail: 'Read({ file_path: "src/routes.ts" })', delay: 400 },
-    { type: 'user', sub: 'tool_result', detail: '(file contents: 42 lines)', delay: 300 },
-    { type: 'assistant', sub: '', detail: 'Now I\'ll add the new endpoints.', delay: 400 },
-    { type: 'assistant', sub: 'tool_use', detail: 'Edit({ file_path: "src/routes.ts", old_string: "...", new_string: "..." })', delay: 500 },
-    { type: 'user', sub: 'tool_result', detail: 'File edited successfully', delay: 300 },
-    { type: 'result', sub: 'success', detail: 'turns: 4, cost: $0.018, duration: 11.2s', delay: 200 },
+    { type: 'SystemMessage', sub: 'init', detail: 'Session abc-123 initialized, model: claude-sonnet-4-20250514', delay: 300 },
+    { type: 'SystemMessage', sub: 'init', detail: 'tools: [Read, Write, Edit, Bash, Glob, Grep]', delay: 200 },
+    { type: 'AssistantMessage', sub: '', detail: "I'll help you build a REST API. Let me read the project structure.", delay: 600 },
+    { type: 'ToolUseBlock', sub: '', detail: 'Glob(pattern="src/**/*.py")', delay: 400 },
+    { type: 'UserMessage', sub: 'tool_result', detail: '["src/main.py", "src/routes.py", "src/db.py"]', delay: 500 },
+    { type: 'AssistantMessage', sub: '', detail: 'I see the project structure. Let me read the existing routes.', delay: 400 },
+    { type: 'ToolUseBlock', sub: '', detail: 'Read(file_path="src/routes.py")', delay: 400 },
+    { type: 'UserMessage', sub: 'tool_result', detail: '(file contents: 42 lines)', delay: 300 },
+    { type: 'AssistantMessage', sub: '', detail: "Now I'll add the new endpoints.", delay: 400 },
+    { type: 'ToolUseBlock', sub: '', detail: 'Edit(file_path="src/routes.py", ...)', delay: 500 },
+    { type: 'UserMessage', sub: 'tool_result', detail: 'File edited successfully', delay: 300 },
+    { type: 'ResultMessage', sub: 'success', detail: 'num_turns=4, total_cost_usd=0.018, duration_ms=11200', delay: 200 },
   ];
 
   const colors = {
-    system: 'log-system',
-    assistant: 'info',
-    user: 'ok',
-    result: 'path',
+    SystemMessage: 'log-system',
+    AssistantMessage: 'info',
+    ToolUseBlock: 'type',
+    UserMessage: 'ok',
+    ResultMessage: 'path',
   };
 
   for (const ev of events) {
-    const label = ev.sub ? `${ev.type}:${ev.sub}` : ev.type;
+    const label = ev.sub ? `${ev.type} (${ev.sub})` : ev.type;
     const cls = colors[ev.type] || 'out';
     appendTerm(id, `<span class="${cls}">[${label}]</span> <span class="out">${esc(ev.detail)}</span>\n`);
     await wait(ev.delay + rand(100, 300));
   }
 
-  appendTerm(id, `\n<span class="ok">\u2705 Stream complete! 12 messages received.</span>\n`);
+  appendTerm(id, `\n<span class="ok">\u2705 Stream complete! 12 messages yielded.</span>\n`);
   markDone('stream');
 }
 
@@ -1111,31 +1135,31 @@ async function runToolDemo() {
   setTerm(id, `<span class="info">\u25B6 Starting session with custom MCP tools...</span>\n\n`);
   await wait(rand(400, 700));
 
-  appendTerm(id, `<span class="log-system">[system]</span> <span class="dim">MCP server "my-app-tools" connected</span>\n`);
+  appendTerm(id, `<span class="log-system">[SystemMessage]</span> <span class="dim">MCP server "my-app-tools" connected</span>\n`);
   appendTerm(id, `<span class="dim">  Tools registered: get_weather, notify_user</span>\n\n`);
   await wait(rand(300, 500));
 
-  appendTerm(id, `<span class="info">[assistant]</span> I'll check the weather in Tokyo and notify you.\n\n`);
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll check the weather in Tokyo and notify you.\n\n`);
   await wait(rand(400, 600));
 
-  appendTerm(id, `<span class="type">[tool_use]</span> <span class="fn">mcp__my-app-tools__get_weather</span>\n`);
-  appendTerm(id, `<span class="dim">  { city: "Tokyo", units: "celsius" }</span>\n`);
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">mcp__my-app-tools__get_weather</span>\n`);
+  appendTerm(id, `<span class="dim">  {"city": "Tokyo", "units": "celsius"}</span>\n`);
   await wait(rand(600, 1000));
 
-  appendTerm(id, `<span class="ok">[tool_result]</span>\n`);
-  appendTerm(id, `<span class="out">  { temp: 22, condition: "Partly Cloudy", humidity: 65 }</span>\n\n`);
+  appendTerm(id, `<span class="ok">[UserMessage: tool_result]</span>\n`);
+  appendTerm(id, `<span class="out">  {"temp": 22, "condition": "Partly Cloudy", "humidity": 65}</span>\n\n`);
   await wait(rand(300, 500));
 
-  appendTerm(id, `<span class="type">[tool_use]</span> <span class="fn">mcp__my-app-tools__notify_user</span>\n`);
-  appendTerm(id, `<span class="dim">  { title: "Weather Update", body: "Tokyo: 22\u00B0C, Partly Cloudy", level: "info" }</span>\n`);
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> <span class="fn">mcp__my-app-tools__notify_user</span>\n`);
+  appendTerm(id, `<span class="dim">  {"title": "Weather Update", "body": "Tokyo: 22\u00B0C, Partly Cloudy"}</span>\n`);
   await wait(rand(400, 600));
 
-  appendTerm(id, `<span class="ok">[tool_result]</span> <span class="dim">Notification sent</span>\n\n`);
+  appendTerm(id, `<span class="ok">[UserMessage: tool_result]</span> <span class="dim">Notification sent</span>\n\n`);
   await wait(rand(200, 400));
 
-  appendTerm(id, `<span class="info">[assistant]</span> The weather in Tokyo is 22\u00B0C and Partly Cloudy.\n`);
-  appendTerm(id, `<span class="info">           </span> I've sent a notification to your app!\n\n`);
-  appendTerm(id, `<span class="ok">[result] \u2705 Success  |  turns: 2  |  cost: $0.008</span>\n`);
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> The weather in Tokyo is 22\u00B0C and Partly Cloudy.\n`);
+  appendTerm(id, `<span class="info">                  </span> I've sent a notification to your app!\n\n`);
+  appendTerm(id, `<span class="ok">[ResultMessage] \u2705 success  |  num_turns: 2  |  total_cost_usd: $0.008</span>\n`);
 
   toast('\uD83D\uDD14 Weather Update: Tokyo 22\u00B0C');
   markDone('tools');
@@ -1143,7 +1167,7 @@ async function runToolDemo() {
 
 async function showToolList() {
   const id = 'tools-out';
-  setTerm(id, `<span class="info">// Built-in tools (from preset: "claude_code"):</span>\n\n`);
+  setTerm(id, `<span class="info"># Built-in tools (from preset: "claude_code"):</span>\n\n`);
 
   const tools = [
     ['Read', 'Read file contents from disk'],
@@ -1166,7 +1190,7 @@ async function showToolList() {
     await wait(rand(80, 180));
   }
 
-  h += `\n<span class="info">// Custom tools (from your MCP server):</span>\n\n`;
+  h += `\n<span class="info"># Custom tools (from your MCP server):</span>\n\n`;
   h += `<span class="ok">get_weather      Fetch current weather for a city</span>\n`;
   h += `<span class="ok">notify_user      Show a notification in the app UI</span>\n`;
   h += `\n<span class="ok">\u2705 ${tools.length + 2} tools available in this session</span>\n`;
@@ -1180,54 +1204,53 @@ async function runPermsDemo(mode) {
   setTerm(id, '');
 
   if (mode === 'default') {
-    appendTerm(id, `<span class="info">\u25B6 permissionMode: "default"</span>\n\n`);
+    appendTerm(id, `<span class="info">\u25B6 permission_mode="default"</span>\n\n`);
     await wait(300);
-    appendTerm(id, `<span class="out">[assistant] Let me edit the auth module...</span>\n\n`);
+    appendTerm(id, `<span class="out">[AssistantMessage] Let me edit the auth module...</span>\n\n`);
     await wait(500);
-    appendTerm(id, `<span class="path">[permission_request]</span> <span class="out">Edit: src/auth.ts</span>\n`);
-    appendTerm(id, `<span class="dim">  Claude wants to modify src/auth.ts</span>\n`);
-    appendTerm(id, `<span class="dim">  Your app must call canUseTool to decide</span>\n\n`);
+    appendTerm(id, `<span class="path">[permission_request]</span> <span class="out">Edit: src/auth.py</span>\n`);
+    appendTerm(id, `<span class="dim">  Claude wants to modify src/auth.py</span>\n`);
+    appendTerm(id, `<span class="dim">  Your can_use_tool callback must decide</span>\n\n`);
     await wait(600);
-    appendTerm(id, `<span class="err">\u23F8 Session paused &mdash; waiting for user approval</span>\n\n`);
+    appendTerm(id, `<span class="err">\u23F8 Session paused \u2014 waiting for user approval</span>\n\n`);
     await wait(400);
-    appendTerm(id, `<span class="ok">\u2705 User approved the edit</span>\n`);
-    appendTerm(id, `<span class="out">[tool_result] File edited successfully</span>\n`);
+    appendTerm(id, `<span class="ok">\u2705 PermissionResultAllow returned</span>\n`);
+    appendTerm(id, `<span class="out">[UserMessage] tool_result: File edited successfully</span>\n`);
 
   } else if (mode === 'bypass') {
-    appendTerm(id, `<span class="info">\u25B6 permissionMode: "bypassPermissions"</span>\n`);
-    appendTerm(id, `<span class="path">\u26A0\uFE0F  Requires: allowDangerouslySkipPermissions: true</span>\n\n`);
+    appendTerm(id, `<span class="info">\u25B6 permission_mode="bypassPermissions"</span>\n`);
+    appendTerm(id, `<span class="path">\u26A0\uFE0F  Use for CI/CD and trusted automation only!</span>\n\n`);
     await wait(300);
-    appendTerm(id, `<span class="out">[assistant] Editing auth module...</span>\n`);
+    appendTerm(id, `<span class="out">[AssistantMessage] Editing auth module...</span>\n`);
     await wait(300);
-    appendTerm(id, `<span class="ok">[tool_use] Edit: src/auth.ts</span> <span class="dim">(auto-approved)</span>\n`);
+    appendTerm(id, `<span class="ok">[ToolUseBlock] Edit: src/auth.py</span> <span class="dim">(auto-approved)</span>\n`);
     await wait(200);
-    appendTerm(id, `<span class="ok">[tool_use] Bash: npm test</span> <span class="dim">(auto-approved)</span>\n`);
+    appendTerm(id, `<span class="ok">[ToolUseBlock] Bash: pytest</span> <span class="dim">(auto-approved)</span>\n`);
     await wait(200);
-    appendTerm(id, `<span class="ok">[tool_use] Write: src/auth.test.ts</span> <span class="dim">(auto-approved)</span>\n\n`);
+    appendTerm(id, `<span class="ok">[ToolUseBlock] Write: src/test_auth.py</span> <span class="dim">(auto-approved)</span>\n\n`);
     await wait(300);
     appendTerm(id, `<span class="ok">\u2705 All tools auto-approved in bypass mode</span>\n`);
-    appendTerm(id, `<span class="dim">   Use this for CI/CD and trusted automation only!</span>\n`);
 
   } else {
-    appendTerm(id, `<span class="info">\u25B6 Custom canUseTool callback</span>\n\n`);
+    appendTerm(id, `<span class="info">\u25B6 Custom can_use_tool callback</span>\n\n`);
     await wait(300);
 
     const calls = [
-      { tool: 'Read', input: 'src/auth.ts', result: 'allow', reason: 'Reads are always safe' },
-      { tool: 'Edit', input: 'src/auth.ts', result: 'allow', reason: 'Edits allowed by policy' },
+      { tool: 'Read', input: 'src/auth.py', result: 'allow', reason: 'Reads are always safe' },
+      { tool: 'Edit', input: 'src/auth.py', result: 'allow', reason: 'Edits allowed by policy' },
       { tool: 'Bash', input: 'rm -rf /', result: 'deny', reason: 'Dangerous command blocked!' },
-      { tool: 'Bash', input: 'npm test', result: 'allow', reason: 'Test commands are allowed' },
+      { tool: 'Bash', input: 'pytest', result: 'allow', reason: 'Test commands are allowed' },
       { tool: 'Write', input: '.env', result: 'deny', reason: 'Cannot write sensitive files' },
     ];
 
     for (const c of calls) {
-      appendTerm(id, `<span class="type">[canUseTool]</span> <span class="fn">${c.tool}</span>(<span class="dim">${esc(c.input)}</span>)\n`);
+      appendTerm(id, `<span class="type">[can_use_tool]</span> <span class="fn">${c.tool}</span>(<span class="dim">${esc(c.input)}</span>)\n`);
       await wait(rand(200, 400));
 
       if (c.result === 'allow') {
-        appendTerm(id, `  <span class="ok">\u2705 ALLOW</span> <span class="dim">${c.reason}</span>\n\n`);
+        appendTerm(id, `  <span class="ok">\u2705 PermissionResultAllow</span> <span class="dim">${c.reason}</span>\n\n`);
       } else {
-        appendTerm(id, `  <span class="err">\u274C DENY</span> <span class="dim">${c.reason}</span>\n\n`);
+        appendTerm(id, `  <span class="err">\u274C PermissionResultDeny</span> <span class="dim">${c.reason}</span>\n\n`);
       }
       await wait(rand(200, 400));
     }
@@ -1256,70 +1279,70 @@ async function runGuiDemo() {
   };
 
   await wait(rand(300, 600));
-  addLog('log-system', '\u25B6 query({ prompt: "' + esc(promptVal) + '" })');
+  addLog('log-system', '\u25B6 query(prompt="' + esc(promptVal) + '", options=options)');
   addLog('log-dim', '  Initializing session...');
   status.textContent = 'Initializing...';
   await wait(rand(500, 900));
 
-  addLog('log-system', '\u2705 Session started: sid_' + Math.random().toString(36).slice(2,10));
+  addLog('log-system', '\u2705 SystemMessage: session sid_' + Math.random().toString(36).slice(2,10));
   addLog('log-dim', '  Model: claude-sonnet-4-20250514 | Tools: 13 loaded');
   status.textContent = 'Working...';
   await wait(rand(400, 700));
 
   addLog('', '');
-  addLog('log-assistant', '\uD83E\uDD16 Claude: I\'ll add a dark mode toggle. Let me first check the current settings page.');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: I\'ll add a dark mode toggle. Let me check the settings page.');
   await wait(rand(400, 600));
 
-  addLog('log-tool', '\uD83D\uDD27 Tool: Read({ file_path: "src/components/Settings.tsx" })');
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Read(file_path="src/components/Settings.tsx")');
   status.textContent = 'Reading Settings.tsx...';
   await wait(rand(600, 900));
 
-  addLog('log-dim', '  \u2192 Read 156 lines');
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (156 lines)');
   await wait(rand(200, 400));
 
   addLog('', '');
-  addLog('log-assistant', '\uD83E\uDD16 Claude: I see the settings structure. I\'ll add a ThemeToggle component and wire it up.');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: I see the structure. Adding ThemeToggle component.');
   await wait(rand(500, 800));
 
-  addLog('log-tool', '\uD83D\uDD27 Tool: Write({ file_path: "src/components/ThemeToggle.tsx" })');
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Write(file_path="src/components/ThemeToggle.tsx")');
   status.textContent = 'Creating ThemeToggle.tsx...';
   await wait(rand(700, 1100));
 
-  addLog('log-dim', '  \u2192 Created new file (48 lines)');
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (created, 48 lines)');
   await wait(rand(200, 400));
 
-  addLog('log-tool', '\uD83D\uDD27 Tool: Edit({ file_path: "src/components/Settings.tsx" })');
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Edit(file_path="src/components/Settings.tsx")');
   status.textContent = 'Editing Settings.tsx...';
   await wait(rand(600, 900));
 
-  addLog('log-dim', '  \u2192 Added import + toggle component');
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (added import + toggle)');
   await wait(rand(200, 400));
 
-  addLog('log-tool', '\uD83D\uDD27 Tool: Edit({ file_path: "src/styles/theme.css" })');
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Edit(file_path="src/styles/theme.css")');
   status.textContent = 'Adding dark mode CSS...';
   await wait(rand(500, 800));
 
-  addLog('log-dim', '  \u2192 Added CSS variables for dark theme');
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (added CSS variables)');
   await wait(rand(200, 400));
 
   addLog('', '');
-  addLog('log-assistant', '\uD83E\uDD16 Claude: Let me verify everything compiles.');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: Let me verify everything compiles.');
   await wait(rand(300, 500));
 
-  addLog('log-tool', '\uD83D\uDD27 Tool: Bash({ command: "npm run build" })');
+  addLog('log-tool', '\uD83D\uDD27 ToolUseBlock: Bash(command="npm run build")');
   status.textContent = 'Building project...';
   await wait(rand(800, 1200));
 
-  addLog('log-dim', '  \u2192 Build completed successfully');
+  addLog('log-dim', '  \u2192 UserMessage: tool_result (build succeeded)');
   await wait(rand(300, 500));
 
   addLog('', '');
-  addLog('log-assistant', '\uD83E\uDD16 Claude: Dark mode toggle is ready! I created a ThemeToggle component,');
-  addLog('log-assistant', '         added it to Settings, and set up CSS custom properties for theming.');
+  addLog('log-assistant', '\uD83E\uDD16 AssistantMessage: Dark mode toggle is ready! Created ThemeToggle,');
+  addLog('log-assistant', '         added it to Settings, and set up CSS custom properties.');
   await wait(rand(300, 500));
 
   addLog('', '');
-  addLog('log-result', '\u2705 Result: Success | Turns: 5 | Cost: $0.02' + rand(1,9) + ' | Duration: ' + rand(8,14) + '.' + rand(1,9) + 's');
+  addLog('log-result', '\u2705 ResultMessage: success | num_turns=5 | total_cost_usd=$0.02' + rand(1,9) + ' | duration_ms=' + rand(8000,14000));
 
   dot.className = 'status-dot done';
   status.textContent = 'Complete';
@@ -1330,43 +1353,40 @@ async function runGuiDemo() {
 function showGuiCode() {
   const id = 'gui-log';
   $(id).innerHTML = '';
-  const code = `<span class="log-dim">// How this GUI bridge works under the hood:</span>
+  const code = `<span class="log-dim"># How the GUI bridge works under the hood (Python):</span>
 
-<span class="kw">import</span> { <span class="fn">query</span> } <span class="kw">from</span> <span class="str">"@anthropic-ai/claude-agent-sdk"</span>;
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> <span class="type">claude_agent_sdk</span> <span class="kw">import</span> <span class="fn">query</span>, <span class="type">ClaudeAgentOptions</span>
+<span class="kw">from</span> <span class="type">claude_agent_sdk</span> <span class="kw">import</span> (
+    <span class="type">AssistantMessage</span>, <span class="type">ResultMessage</span>, <span class="type">SystemMessage</span>,
+)
 
-<span class="kw">async function</span> <span class="fn">handleSendClick</span>(prompt) {
-  updateUI({ status: <span class="str">"connecting"</span> });
 
-  <span class="kw">const</span> conversation = <span class="fn">query</span>({
-    prompt,
-    options: {
-      cwd: projectDir,
-      tools: { type: <span class="str">"preset"</span>, preset: <span class="str">"claude_code"</span> },
-      systemPrompt: { type: <span class="str">"preset"</span>, preset: <span class="str">"claude_code"</span> },
-      permissionMode: <span class="str">"acceptEdits"</span>,
-    },
-  });
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">handle_task</span>(prompt: str):
+    update_ui(status=<span class="str">"connecting"</span>)
 
-  <span class="kw">for await</span> (<span class="kw">const</span> msg <span class="kw">of</span> conversation) {
-    <span class="kw">switch</span> (msg.type) {
-      <span class="kw">case</span> <span class="str">"system"</span>:
-        addLog(<span class="str">"Session started: "</span> + msg.session_id);
-        <span class="kw">break</span>;
-      <span class="kw">case</span> <span class="str">"assistant"</span>:
-        <span class="kw">for</span> (<span class="kw">const</span> block <span class="kw">of</span> msg.message.content) {
-          <span class="kw">if</span> (block.type === <span class="str">"text"</span>)
-            addLog(<span class="str">"Claude: "</span> + block.text);
-          <span class="kw">if</span> (block.type === <span class="str">"tool_use"</span>)
-            addLog(<span class="str">"Tool: "</span> + block.name + <span class="str">"("</span> + JSON.stringify(block.input) + <span class="str">")"</span>);
-        }
-        <span class="kw">break</span>;
-      <span class="kw">case</span> <span class="str">"result"</span>:
-        addLog(<span class="str">"Done! Cost: $"</span> + msg.total_cost_usd);
-        updateUI({ status: <span class="str">"complete"</span> });
-        <span class="kw">break</span>;
-    }
-  }
-}`;
+    options = <span class="type">ClaudeAgentOptions</span>(
+        cwd=project_dir,
+        tools={<span class="str">"type"</span>: <span class="str">"preset"</span>, <span class="str">"preset"</span>: <span class="str">"claude_code"</span>},
+        system_prompt={<span class="str">"type"</span>: <span class="str">"preset"</span>, <span class="str">"preset"</span>: <span class="str">"claude_code"</span>},
+        permission_mode=<span class="str">"acceptEdits"</span>,
+    )
+
+    <span class="kw">async</span> <span class="kw">for</span> msg <span class="kw">in</span> <span class="fn">query</span>(prompt=prompt, options=options):
+        <span class="kw">if</span> <span class="fn">isinstance</span>(msg, <span class="type">SystemMessage</span>):
+            add_log(f<span class="str">"Session: {msg.data['session_id']}"</span>)
+
+        <span class="kw">elif</span> <span class="fn">isinstance</span>(msg, <span class="type">AssistantMessage</span>):
+            <span class="kw">for</span> block <span class="kw">in</span> msg.content:
+                <span class="kw">if</span> <span class="fn">hasattr</span>(block, <span class="str">"text"</span>):
+                    add_log(f<span class="str">"Claude: {block.text}"</span>)
+                <span class="kw">elif</span> <span class="fn">hasattr</span>(block, <span class="str">"name"</span>):
+                    add_log(f<span class="str">"Tool: {block.name}({block.input})"</span>)
+                    update_ui(status=f<span class="str">"Running {block.name}..."</span>)
+
+        <span class="kw">elif</span> <span class="fn">isinstance</span>(msg, <span class="type">ResultMessage</span>):
+            add_log(f<span class="str">"Done! Cost: \${msg.total_cost_usd}"</span>)
+            update_ui(status=<span class="str">"complete"</span>)`;
   $(id).innerHTML = code;
   markDone('gui');
 }
@@ -1374,44 +1394,48 @@ function showGuiCode() {
 // ─── 7. Multi-turn Demo ────────────────────────
 async function runMultiTurn() {
   const id = 'resume-out';
-  setTerm(id, `<span class="info">\u25B6 Starting multi-turn conversation...</span>\n\n`);
+  setTerm(id, `<span class="info">\u25B6 Running ClaudeSDKClient multi-turn session...</span>\n\n`);
   await wait(rand(400, 700));
 
-  appendTerm(id, `<span class="path">[turn 1]</span> <span class="out">User: "Create a React component for a todo list"</span>\n`);
+  appendTerm(id, `<span class="dim"># async with ClaudeSDKClient(options) as client:</span>\n\n`);
+  await wait(300);
+
+  appendTerm(id, `<span class="path">[turn 1]</span> <span class="out">client.query("Create a React component for a todo list")</span>\n`);
   await wait(rand(400, 600));
 
-  appendTerm(id, `<span class="info">[assistant]</span> I'll create a TodoList component with add/remove functionality.\n`);
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll create a TodoList component with add/remove.\n`);
   await wait(rand(300, 500));
 
-  appendTerm(id, `<span class="type">[tool_use]</span> Write: src/TodoList.tsx\n`);
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> Write: src/TodoList.tsx\n`);
   await wait(rand(400, 700));
 
-  appendTerm(id, `<span class="ok">[tool_result]</span> <span class="dim">File created (67 lines)</span>\n\n`);
+  appendTerm(id, `<span class="ok">[ResultMessage]</span> <span class="dim">success (67 lines created)</span>\n\n`);
   await wait(rand(300, 500));
 
-  appendTerm(id, `<span class="dim">\u23F8 Waiting for next user message...</span>\n\n`);
-  await wait(rand(600, 900));
-
-  appendTerm(id, `<span class="path">[turn 2]</span> <span class="out">User: "Now add drag-and-drop reordering"</span>\n`);
+  appendTerm(id, `<span class="dim"># Session context retained across queries!</span>\n\n`);
   await wait(rand(400, 600));
 
-  appendTerm(id, `<span class="info">[assistant]</span> I'll add drag-and-drop using the HTML5 Drag API.\n`);
+  appendTerm(id, `<span class="path">[turn 2]</span> <span class="out">client.query("Now add drag-and-drop reordering")</span>\n`);
+  await wait(rand(400, 600));
+
+  appendTerm(id, `<span class="info">[AssistantMessage]</span> I'll add drag-and-drop using the HTML5 Drag API.\n`);
+  appendTerm(id, `<span class="dim">  (Claude remembers TodoList.tsx from turn 1!)</span>\n`);
   await wait(rand(300, 500));
 
-  appendTerm(id, `<span class="type">[tool_use]</span> Edit: src/TodoList.tsx\n`);
+  appendTerm(id, `<span class="type">[ToolUseBlock]</span> Edit: src/TodoList.tsx\n`);
   await wait(rand(500, 800));
 
-  appendTerm(id, `<span class="ok">[tool_result]</span> <span class="dim">Added drag handlers + state logic</span>\n\n`);
+  appendTerm(id, `<span class="ok">[ResultMessage]</span> <span class="dim">success (added drag handlers + state logic)</span>\n\n`);
   await wait(rand(200, 400));
 
-  appendTerm(id, `<span class="ok">[result] \u2705 Multi-turn complete  |  2 turns  |  cost: $0.015</span>\n`);
-  appendTerm(id, `<span class="dim">  Session ID: sid_${Math.random().toString(36).slice(2,10)} (can be resumed later)</span>\n`);
+  appendTerm(id, `<span class="ok">\u2705 Multi-turn complete  |  2 exchanges  |  total_cost_usd: $0.015</span>\n`);
+  appendTerm(id, `<span class="dim">  session_id: sid_${Math.random().toString(36).slice(2,10)}</span>\n`);
   markDone('resume');
 }
 
 async function runResumeDemo() {
   const id = 'resume-out';
-  setTerm(id, `<span class="info">\u25B6 Listing previous sessions...</span>\n\n`);
+  setTerm(id, `<span class="info">\u25B6 Listing previous sessions with list_sessions()...</span>\n\n`);
   await wait(rand(400, 700));
 
   const sessions = [
@@ -1421,32 +1445,32 @@ async function runResumeDemo() {
   ];
 
   let h = $('resume-out').innerHTML;
-  h += `<span class="fn">listSessions</span>({ dir: <span class="str">"/my/project"</span> })\n\n`;
+  h += `<span class="fn">list_sessions</span>(dir=<span class="str">"/my/project"</span>)\n\n`;
   for (const s of sessions) {
     h += `<span class="path">${s.id}</span>\n`;
-    h += `<span class="out">  "${s.summary}"</span>\n`;
+    h += `<span class="out">  summary: "${s.summary}"</span>\n`;
     h += `<span class="dim">  ${s.date} \u2022 branch: ${s.branch}</span>\n\n`;
     setTerm(id, h);
     await wait(rand(200, 400));
   }
 
-  h += `<span class="info">\u25B6 Resuming session: ${sessions[2].id}...</span>\n\n`;
+  h += `<span class="info">\u25B6 Resuming with query(prompt=..., options=ClaudeAgentOptions(resume="${sessions[2].id}"))...</span>\n\n`;
   setTerm(id, h);
   await wait(rand(500, 800));
 
-  h += `<span class="ok">[system]</span> <span class="dim">Session resumed with full context</span>\n`;
+  h += `<span class="ok">[SystemMessage]</span> <span class="dim">Session resumed with full context</span>\n`;
   h += `<span class="out">  Previous: "Create todo list component" (3 turns)</span>\n\n`;
-  h += `<span class="path">[resumed]</span> <span class="out">User: "Now add unit tests for the TodoList"</span>\n\n`;
+  h += `<span class="path">[resumed]</span> <span class="out">prompt: "Now add unit tests for the TodoList"</span>\n\n`;
   setTerm(id, h);
   await wait(rand(400, 600));
 
-  h += `<span class="info">[assistant]</span> I remember the TodoList component I created. I'll add tests using Vitest.\n\n`;
-  h += `<span class="type">[tool_use]</span> Write: src/TodoList.test.tsx\n`;
+  h += `<span class="info">[AssistantMessage]</span> I remember the TodoList component. I'll add tests using pytest.\n\n`;
+  h += `<span class="type">[ToolUseBlock]</span> Write: src/test_todo_list.py\n`;
   setTerm(id, h);
   await wait(rand(400, 600));
 
-  h += `<span class="ok">[tool_result]</span> <span class="dim">Created test file (45 lines, 4 test cases)</span>\n\n`;
-  h += `<span class="ok">[result] \u2705 Resumed session complete  |  cost: $0.009</span>\n`;
+  h += `<span class="ok">[UserMessage]</span> <span class="dim">tool_result: Created test file (45 lines, 4 test cases)</span>\n\n`;
+  h += `<span class="ok">[ResultMessage] \u2705 success  |  total_cost_usd: $0.009</span>\n`;
   setTerm(id, h);
   markDone('resume');
 }
