@@ -779,17 +779,27 @@ function updateScore() {
 
 // ─── Python syntax highlight ────────────────────
 function hi(code) {
+  // Use Unicode PUA chars as placeholders so subsequent replacements
+  // cannot corrupt already-highlighted spans (fixes Firefox "kw"> bug
+  // where the string regex was matching "kw" inside class="kw").
+  const slots = [];
+  function protect(html) {
+    const ch = String.fromCharCode(0xE000 + slots.length);
+    slots.push(html);
+    return ch;
+  }
   return code
-    .replace(/#[^\n]*/g, m => `<span class="comment">${m}</span>`)
-    .replace(/"""[\s\S]*?"""/g, m => `<span class="str">${m}</span>`)
+    .replace(/"""[\s\S]*?"""/g, m => protect(`<span class="str">${m}</span>`))
+    .replace(/f"([^"\\]*(\\.[^"\\]*)*)"/g, (_, c) => protect(`<span class="str">f"${c}"</span>`))
+    .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, (_, c) => protect(`<span class="str">"${c}"</span>`))
+    .replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, (_, c) => protect(`<span class="str">'${c}'</span>`))
+    .replace(/#[^\n]*/g, m => protect(`<span class="comment">${m}</span>`))
     .replace(/\b(import|from|async|await|for|def|if|elif|else|return|class|as|in|with|None|True|False|try|except|yield|pass)\b/g, '<span class="kw">$1</span>')
-    .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="str">"$1"</span>')
-    .replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, "<span class=\"str\">'$1'</span>")
-    .replace(/f"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="str">f"$1"</span>')
     .replace(/\b(query|tool|create_sdk_mcp_server|list_sessions|print|isinstance|hasattr)\b/g, '<span class="fn">$1</span>')
     .replace(/\b(ClaudeAgentOptions|ClaudeSDKClient|AssistantMessage|ResultMessage|SystemMessage|UserMessage|TextBlock|ToolUseBlock|StreamEvent|PermissionResultAllow|PermissionResultDeny|ToolPermissionContext)\b/g, '<span class="type">$1</span>')
     .replace(/@(tool|dataclass)/g, '<span class="dec">@$1</span>')
-    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
+    .replace(/[\uE000-\uF8FF]/g, m => slots[m.charCodeAt(0) - 0xE000]);
 }
 
 // ─── Populate code blocks ───────────────────────
