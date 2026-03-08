@@ -8,6 +8,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: "pr-preview-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
@@ -32,12 +36,14 @@ jobs:
             git fetch origin gh-pages
             git checkout gh-pages
           else
+            # Create orphan gh-pages branch with main branch content as root
             git checkout --orphan gh-pages
             git rm -rf . > /dev/null 2>&1 || true
-            cp -r /tmp/pr-content/. .
+            # Fetch main branch content for the site root
+            git checkout main -- . 2>/dev/null || git checkout master -- . 2>/dev/null || true
             mkdir -p pr
-            git add .
-            git commit -m "Initialize gh-pages branch"
+            git add -A
+            git commit -m "Initialize gh-pages branch from main"
           fi
 
           # Replace the PR's preview directory with fresh content
@@ -68,7 +74,7 @@ jobs:
               c.user.type === 'Bot' && c.body.includes('PR Preview')
             );
 
-            const body = `## 🔍 PR Preview\n\n**URL:** [${url}](${url})\n\n_Updated: ${new Date().toUTCString()}_`;
+            const body = `## PR Preview\n\n**URL:** [${url}](${url})\n\n_Updated: ${new Date().toUTCString()}_`;
 
             if (existing) {
               await github.rest.issues.updateComment({
