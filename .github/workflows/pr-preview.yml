@@ -34,7 +34,7 @@ jobs:
           else
             git checkout --orphan gh-pages
             git rm -rf . > /dev/null 2>&1 || true
-            mkdir -p prs
+            mkdir -p pr
             cat > index.html <<'EOF'
           <!DOCTYPE html>
           <html lang="en">
@@ -43,16 +43,16 @@ jobs:
           <body><h1>PR Previews</h1><p>Preview links are posted as comments on each PR.</p></body>
           </html>
           EOF
-            git add index.html prs
+            git add index.html pr
             git commit -m "Initialize gh-pages branch"
           fi
 
           # Replace the PR's preview directory with fresh content
-          rm -rf "prs/${PR_NUMBER}"
-          mkdir -p "prs/${PR_NUMBER}"
-          cp -r /tmp/pr-content/. "prs/${PR_NUMBER}/"
+          rm -rf "pr/${PR_NUMBER}"
+          mkdir -p "pr/${PR_NUMBER}"
+          cp -r /tmp/pr-content/. "pr/${PR_NUMBER}/"
 
-          git add "prs/${PR_NUMBER}"
+          git add "pr/${PR_NUMBER}"
           git diff --cached --quiet && echo "Nothing to commit" || \
             git commit -m "Deploy preview for PR #${PR_NUMBER} [skip ci]"
           git push origin gh-pages
@@ -65,7 +65,7 @@ jobs:
             const pr = context.payload.pull_request.number;
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
-            const url   = `https://${owner}.github.io/${repo}/prs/${pr}/`;
+            const url   = `https://${owner}.github.io/${repo}/pr/${pr}/`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner, repo, issue_number: pr,
