@@ -8,6 +8,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: "pr-preview-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
@@ -32,27 +36,22 @@ jobs:
             git fetch origin gh-pages
             git checkout gh-pages
           else
+            # Create orphan gh-pages branch with main branch content as root
             git checkout --orphan gh-pages
             git rm -rf . > /dev/null 2>&1 || true
-            mkdir -p prs
-            cat > index.html <<'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head><meta charset="UTF-8"><title>PR Previews</title>
-          <style>body{font-family:sans-serif;padding:2rem;}</style></head>
-          <body><h1>PR Previews</h1><p>Preview links are posted as comments on each PR.</p></body>
-          </html>
-          EOF
-            git add index.html prs
-            git commit -m "Initialize gh-pages branch"
+            # Fetch main branch content for the site root
+            git checkout main -- . 2>/dev/null || git checkout master -- . 2>/dev/null || true
+            mkdir -p pr
+            git add -A
+            git commit -m "Initialize gh-pages branch from main"
           fi
 
           # Replace the PR's preview directory with fresh content
-          rm -rf "prs/${PR_NUMBER}"
-          mkdir -p "prs/${PR_NUMBER}"
-          cp -r /tmp/pr-content/. "prs/${PR_NUMBER}/"
+          rm -rf "pr/${PR_NUMBER}"
+          mkdir -p "pr/${PR_NUMBER}"
+          cp -r /tmp/pr-content/. "pr/${PR_NUMBER}/"
 
-          git add "prs/${PR_NUMBER}"
+          git add "pr/${PR_NUMBER}"
           git diff --cached --quiet && echo "Nothing to commit" || \
             git commit -m "Deploy preview for PR #${PR_NUMBER} [skip ci]"
           git push origin gh-pages
@@ -65,7 +64,7 @@ jobs:
             const pr = context.payload.pull_request.number;
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
-            const url   = `https://${owner}.github.io/${repo}/prs/${pr}/`;
+            const url   = `https://${owner}.github.io/${repo}/pr/${pr}/`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner, repo, issue_number: pr,
@@ -75,7 +74,7 @@ jobs:
               c.user.type === 'Bot' && c.body.includes('PR Preview')
             );
 
-            const body = `## 🔍 PR Preview\n\n**URL:** [${url}](${url})\n\n_Updated: ${new Date().toUTCString()}_`;
+            const body = `## PR Preview\n\n**URL:** [${url}](${url})\n\n_Updated: ${new Date().toUTCString()}_`;
 
             if (existing) {
               await github.rest.issues.updateComment({
