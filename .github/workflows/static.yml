@@ -1,43 +1,60 @@
-# Simple workflow for deploying static content to GitHub Pages
+# Deploys main branch static content to the root of gh-pages branch
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: "pages"
+  group: "pages-deploy"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload entire repository
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+
+      - name: Deploy to gh-pages root
+        run: |
+          # Copy site content to temp location
+          mkdir -p /tmp/site-content
+          cp -r . /tmp/site-content/
+          rm -rf /tmp/site-content/.git
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch or create the gh-pages branch
+          if git ls-remote --exit-code --heads origin gh-pages > /dev/null 2>&1; then
+            git fetch origin gh-pages
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . > /dev/null 2>&1 || true
+          fi
+
+          # Preserve existing PR preview directories
+          if [ -d "pr" ]; then
+            cp -r pr /tmp/pr-previews
+          fi
+
+          # Replace root content with main branch content (except pr/ dir)
+          find . -maxdepth 1 ! -name '.git' ! -name 'pr' ! -name '.' -exec rm -rf {} +
+          cp -r /tmp/site-content/. .
+          rm -rf pr
+
+          # Restore PR preview directories
+          if [ -d "/tmp/pr-previews" ]; then
+            cp -r /tmp/pr-previews pr
+          fi
+
+          git add -A
+          git diff --cached --quiet && echo "Nothing to commit" || \
+            git commit -m "Deploy main branch to gh-pages [skip ci]"
+          git push origin gh-pages
