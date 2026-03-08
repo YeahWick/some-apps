@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Event Extractor</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .api-key-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .api-key-section label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .api-key-row {
+            display: flex;
+            gap: 8px;
+        }
+        .api-key-row input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .api-key-row input:focus {
+            border-color: #667eea;
+        }
+        .api-key-row button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .api-key-row button:hover { opacity: 0.9; }
+        .api-key-status {
+            font-size: 12px;
+            margin-top: 6px;
+            color: #888;
+        }
+        .api-key-status.saved { color: #34c759; }
+
+        .upload-zone {
+            border: 2.5px dashed #ccc;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .upload-zone .upload-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .upload-zone .upload-text {
+            font-size: 15px;
+            color: #555;
+            font-weight: 500;
+        }
+        .upload-zone .upload-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        .file-preview {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            align-items: center;
+            gap: 12px;
+        }
+        .file-preview.visible { display: flex; }
+        .file-preview .file-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .file-preview .file-thumb img {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .file-preview .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .file-preview .file-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-preview .file-size {
+            font-size: 11px;
+            color: #999;
+        }
+        .file-preview .file-remove {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #ccc;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .file-preview .file-remove:hover { color: #ff3b30; }
+
+        .extract-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            margin-bottom: 20px;
+        }
+        .extract-btn:hover:not(:disabled) { opacity: 0.9; transform: scale(1.01); }
+        .extract-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-msg {
+            text-align: center;
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .status-msg.visible { display: block; }
+        .status-msg.error { color: #ff3b30; }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid #ccc;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .events-list {
+            display: none;
+        }
+        .events-list.visible { display: block; }
+        .events-list h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .event-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .event-card .event-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .event-card .event-detail {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 3px;
+        }
+        .event-card .event-detail span {
+            color: #555;
+            font-weight: 500;
+        }
+        .event-card .event-download {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .event-card .event-download:hover { opacity: 0.85; }
+        .event-card .event-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .event-card .event-gcal {
+            display: inline-block;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-decoration: none;
+        }
+        .event-card .event-gcal:hover { opacity: 0.85; }
+
+        .download-all-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #ff9500 0%, #ff6a00 100%);
+            cursor: pointer;
+            margin-top: 4px;
+            margin-bottom: 8px;
+            transition: opacity 0.2s;
+        }
+        .download-all-btn:hover { opacity: 0.85; }
+    </style>
+</head>
+<body class="app-page">
+    <div class="app-container">
+        <div class="app-header">
+            <span class="app-emoji">📆</span>
+            <h1>Event Extractor</h1>
+        </div>
+        <div class="app-content">
+            <p style="margin-bottom: 18px; font-size: 14px;">Upload a photo or PDF containing event details and extract calendar events you can import into your calendar app.</p>
+
+            <!-- API Key Section -->
+            <div class="api-key-section">
+                <label for="apiKeyInput">Anthropic API Key</label>
+                <div class="api-key-row">
+                    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+                    <button id="saveKeyBtn" onclick="saveApiKey()">Save</button>
+                </div>
+                <div class="api-key-status" id="apiKeyStatus"></div>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept="image/*,.pdf" aria-label="Upload image or PDF">
+                <span class="upload-icon">📎</span>
+                <div class="upload-text">Tap to upload or drag &amp; drop</div>
+                <div class="upload-hint">Images (JPG, PNG, WEBP, GIF) or PDF</div>
+            </div>
+
+            <!-- File Preview -->
+            <div class="file-preview" id="filePreview">
+                <div class="file-thumb" id="fileThumb"></div>
+                <div class="file-info">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-size" id="fileSize"></div>
+                </div>
+                <button class="file-remove" onclick="clearFile()" aria-label="Remove file">&times;</button>
+            </div>
+
+            <!-- Extract Button -->
+            <button class="extract-btn" id="extractBtn" onclick="extractEvents()" disabled>Extract Events</button>
+
+            <!-- Status -->
+            <div class="status-msg" id="statusMsg"></div>
+
+            <!-- Events List -->
+            <div class="events-list" id="eventsList">
+                <h3>Extracted Events</h3>
+                <div id="eventsContainer"></div>
+                <button class="download-all-btn" id="downloadAllBtn" onclick="downloadAll()">Download All as .ics</button>
+            </div>
+
+            <a href="../index.html" class="back-button">&#8592; Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        let selectedFile = null;
+        let fileBase64 = null;
+        let fileMediaType = null;
+        let extractedEvents = [];
+
+        // --- API Key Management ---
+        function loadApiKey() {
+            const key = localStorage.getItem('anthropic_api_key') || '';
+            const input = document.getElementById('apiKeyInput');
+            const status = document.getElementById('apiKeyStatus');
+            if (key) {
+                input.value = key;
+                status.textContent = 'Key saved in browser storage';
+                status.className = 'api-key-status saved';
+            }
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            const status = document.getElementById('apiKeyStatus');
+            const key = input.value.trim();
+            if (!key) {
+                status.textContent = 'Please enter a valid API key';
+                status.className = 'api-key-status error';
+                return;
+            }
+            localStorage.setItem('anthropic_api_key', key);
+            status.textContent = 'Key saved in browser storage';
+            status.className = 'api-key-status saved';
+            updateExtractBtn();
+        }
+
+        function getApiKey() {
+            return localStorage.getItem('anthropic_api_key') || '';
+        }
+
+        // --- File Handling ---
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) handleFile(fileInput.files[0]);
+        });
+
+        function handleFile(file) {
+            const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const isPdf = file.type === 'application/pdf';
+            const isImage = validImageTypes.includes(file.type);
+
+            if (!isImage && !isPdf) {
+                showStatus('Unsupported file type. Use JPG, PNG, WEBP, GIF, or PDF.', true);
+                return;
+            }
+
+            selectedFile = file;
+            fileMediaType = file.type;
+
+            // Read as base64
+            const reader = new FileReader();
+            reader.onload = () => {
+                fileBase64 = reader.result.split(',')[1];
+                showFilePreview(file, isImage ? reader.result : null);
+                updateExtractBtn();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showFilePreview(file, dataUrl) {
+            const preview = document.getElementById('filePreview');
+            const thumb = document.getElementById('fileThumb');
+            const name = document.getElementById('fileName');
+            const size = document.getElementById('fileSize');
+
+            if (dataUrl && file.type.startsWith('image/')) {
+                thumb.innerHTML = '<img src="' + dataUrl + '" alt="preview">';
+            } else {
+                thumb.innerHTML = '📄';
+            }
+            name.textContent = file.name;
+            size.textContent = formatSize(file.size);
+            preview.classList.add('visible');
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            fileBase64 = null;
+            fileMediaType = null;
+            fileInput.value = '';
+            document.getElementById('filePreview').classList.remove('visible');
+            document.getElementById('eventsList').classList.remove('visible');
+            extractedEvents = [];
+            updateExtractBtn();
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        function updateExtractBtn() {
+            document.getElementById('extractBtn').disabled = !(fileBase64 && getApiKey());
+        }
+
+        // --- Anthropic API Call ---
+        async function extractEvents() {
+            const apiKey = getApiKey();
+            if (!apiKey || !fileBase64) return;
+
+            const btn = document.getElementById('extractBtn');
+            btn.disabled = true;
+            btn.textContent = 'Extracting...';
+            document.getElementById('eventsList').classList.remove('visible');
+            extractedEvents = [];
+            showStatus('<span class="spinner"></span> Analyzing document...', false);
+
+            const isPdf = fileMediaType === 'application/pdf';
+
+            // Build the content blocks
+            let contentBlocks = [];
+
+            if (isPdf) {
+                contentBlocks.push({
+                    type: "document",
+                    source: {
+                        type: "base64",
+                        media_type: "application/pdf",
+                        data: fileBase64
+                    }
+                });
+            } else {
+                contentBlocks.push({
+                    type: "image",
+                    source: {
+                        type: "base64",
+                        media_type: fileMediaType,
+                        data: fileBase64
+                    }
+                });
+            }
+
+            contentBlocks.push({
+                type: "text",
+                text: "Extract all calendar events from this document/image. For each event, call the create_calendar_events tool with the structured event data. Include as much detail as you can find: title, dates, times, location, and description. If a year is not specified, assume the current year. Use ISO 8601 datetime format (YYYYMMDDTHHMMSS) for dates. If only a date is given with no time, set all_day to true."
+            });
+
+            const tool = {
+                name: "create_calendar_events",
+                description: "Create calendar events extracted from the uploaded document or image. Each event will be made available as a downloadable .ics file.",
+                input_schema: {
+                    type: "object",
+                    properties: {
+                        events: {
+                            type: "array",
+                            description: "List of calendar events found in the document",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    title: { type: "string", description: "Event title or name" },
+                                    start_date: { type: "string", description: "Start date/time in YYYYMMDDTHHMMSS or YYYYMMDD for all-day events" },
+                                    end_date: { type: "string", description: "End date/time in YYYYMMDDTHHMMSS or YYYYMMDD for all-day events. If not specified, use 1 hour after start for timed events or next day for all-day." },
+                                    location: { type: "string", description: "Event location if mentioned" },
+                                    description: { type: "string", description: "Additional event details or notes" },
+                                    all_day: { type: "boolean", description: "True if this is an all-day event with no specific time" }
+                                },
+                                required: ["title", "start_date"]
+                            }
+                        }
+                    },
+                    required: ["events"]
+                }
+            };
+
+            try {
+                const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 4096,
+                        tools: [tool],
+                        tool_choice: { type: "tool", name: "create_calendar_events" },
+                        messages: [{
+                            role: "user",
+                            content: contentBlocks
+                        }]
+                    })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.error?.message || 'API request failed (' + resp.status + ')');
+                }
+
+                const data = await resp.json();
+
+                // Find the tool_use block
+                const toolUse = data.content.find(b => b.type === 'tool_use');
+                if (!toolUse || !toolUse.input || !toolUse.input.events || !toolUse.input.events.length) {
+                    showStatus('No events found in the document.', true);
+                    btn.disabled = false;
+                    btn.textContent = 'Extract Events';
+                    return;
+                }
+
+                extractedEvents = toolUse.input.events;
+                renderEvents(extractedEvents);
+                hideStatus();
+
+            } catch (e) {
+                showStatus(e.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Extract Events';
+                updateExtractBtn();
+            }
+        }
+
+        // --- Render Events ---
+        function renderEvents(events) {
+            const container = document.getElementById('eventsContainer');
+            container.innerHTML = '';
+
+            const colors = ['#667eea', '#f5576c', '#34c759', '#ff9500', '#af52de', '#5ac8fa', '#ff2d55', '#007aff'];
+
+            events.forEach((evt, i) => {
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                card.style.borderLeftColor = colors[i % colors.length];
+
+                const startDisplay = formatEventDate(evt.start_date, evt.all_day);
+                const endDisplay = evt.end_date ? formatEventDate(evt.end_date, evt.all_day) : '';
+
+                let detailsHtml = '';
+                detailsHtml += '<div class="event-detail">&#128197; <span>' + startDisplay + '</span>';
+                if (endDisplay && endDisplay !== startDisplay) {
+                    detailsHtml += ' &mdash; <span>' + endDisplay + '</span>';
+                }
+                detailsHtml += '</div>';
+
+                if (evt.location) {
+                    detailsHtml += '<div class="event-detail">&#128205; <span>' + escapeHtml(evt.location) + '</span></div>';
+                }
+                if (evt.description) {
+                    detailsHtml += '<div class="event-detail">&#128221; <span>' + escapeHtml(evt.description) + '</span></div>';
+                }
+
+                card.innerHTML = '<div class="event-title">' + escapeHtml(evt.title) + '</div>' +
+                    detailsHtml +
+                    '<div class="event-buttons">' +
+                    '<button class="event-download" onclick="downloadEvent(' + i + ')">&#128229; .ics File</button>' +
+                    '<a class="event-gcal" href="' + buildGoogleCalUrl(evt) + '" target="_blank" rel="noopener">&#128197; Google Calendar</a>' +
+                    '</div>';
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('eventsList').classList.add('visible');
+        }
+
+        function formatEventDate(dateStr, allDay) {
+            if (!dateStr) return '';
+            // Parse YYYYMMDD or YYYYMMDDTHHMMSS
+            const clean = dateStr.replace(/[-:]/g, '');
+            const y = clean.substring(0, 4);
+            const m = clean.substring(4, 6);
+            const d = clean.substring(6, 8);
+
+            if (allDay || clean.length <= 8) {
+                return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                });
+            }
+
+            const hh = clean.substring(9, 11);
+            const mm = clean.substring(11, 13);
+            const dt = new Date(y, m - 1, d, hh, mm);
+            return dt.toLocaleDateString('en-US', {
+                weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+            }) + ' ' + dt.toLocaleTimeString('en-US', {
+                hour: 'numeric', minute: '2-digit'
+            });
+        }
+
+        function escapeHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // --- Google Calendar URL ---
+        function buildGoogleCalUrl(evt) {
+            const startClean = (evt.start_date || '').replace(/[-:]/g, '');
+            let dates;
+
+            if (evt.all_day || startClean.length <= 8) {
+                const startDate = startClean.substring(0, 8);
+                let endDate;
+                if (evt.end_date) {
+                    endDate = evt.end_date.replace(/[-:]/g, '').substring(0, 8);
+                } else {
+                    const y = parseInt(startDate.substring(0, 4));
+                    const m = parseInt(startDate.substring(4, 6)) - 1;
+                    const d = parseInt(startDate.substring(6, 8));
+                    const next = new Date(y, m, d + 1);
+                    endDate = next.getFullYear().toString() +
+                        String(next.getMonth() + 1).padStart(2, '0') +
+                        String(next.getDate()).padStart(2, '0');
+                }
+                dates = startDate + '/' + endDate;
+            } else {
+                const startDt = startClean.substring(0, 15);
+                let endDt;
+                if (evt.end_date) {
+                    endDt = evt.end_date.replace(/[-:]/g, '').substring(0, 15);
+                } else {
+                    const y = parseInt(startClean.substring(0, 4));
+                    const mo = parseInt(startClean.substring(4, 6)) - 1;
+                    const d = parseInt(startClean.substring(6, 8));
+                    const h = parseInt(startClean.substring(9, 11));
+                    const mi = parseInt(startClean.substring(11, 13));
+                    const s = parseInt(startClean.substring(13, 15) || '0');
+                    const end = new Date(y, mo, d, h + 1, mi, s);
+                    endDt = formatICSDate(end);
+                }
+                dates = startDt + '/' + endDt;
+            }
+
+            const params = new URLSearchParams();
+            params.set('action', 'TEMPLATE');
+            params.set('text', evt.title || '');
+            params.set('dates', dates);
+            if (evt.location) params.set('location', evt.location);
+            if (evt.description) params.set('details', evt.description);
+
+            return 'https://calendar.google.com/calendar/render?' + params.toString();
+        }
+
+        // --- ICS Generation ---
+        function generateICS(evt) {
+            const now = new Date();
+            const stamp = formatICSDate(now);
+
+            let dtStartLine, dtEndLine;
+            const startClean = (evt.start_date || '').replace(/[-:]/g, '');
+
+            if (evt.all_day || startClean.length <= 8) {
+                // All-day event: VALUE=DATE format
+                const startDate = startClean.substring(0, 8);
+                let endDate;
+                if (evt.end_date) {
+                    endDate = evt.end_date.replace(/[-:]/g, '').substring(0, 8);
+                } else {
+                    // Next day
+                    const y = parseInt(startDate.substring(0, 4));
+                    const m = parseInt(startDate.substring(4, 6)) - 1;
+                    const d = parseInt(startDate.substring(6, 8));
+                    const next = new Date(y, m, d + 1);
+                    endDate = next.getFullYear().toString() +
+                        String(next.getMonth() + 1).padStart(2, '0') +
+                        String(next.getDate()).padStart(2, '0');
+                }
+                dtStartLine = 'DTSTART;VALUE=DATE:' + startDate;
+                dtEndLine = 'DTEND;VALUE=DATE:' + endDate;
+            } else {
+                // Timed event
+                const startDt = startClean.substring(0, 15);
+                let endDt;
+                if (evt.end_date) {
+                    endDt = evt.end_date.replace(/[-:]/g, '').substring(0, 15);
+                } else {
+                    // Default 1 hour later
+                    const y = parseInt(startClean.substring(0, 4));
+                    const mo = parseInt(startClean.substring(4, 6)) - 1;
+                    const d = parseInt(startClean.substring(6, 8));
+                    const h = parseInt(startClean.substring(9, 11));
+                    const mi = parseInt(startClean.substring(11, 13));
+                    const s = parseInt(startClean.substring(13, 15) || '0');
+                    const end = new Date(y, mo, d, h + 1, mi, s);
+                    endDt = formatICSDate(end);
+                }
+                dtStartLine = 'DTSTART:' + startDt;
+                dtEndLine = 'DTEND:' + endDt;
+            }
+
+            const uid = 'evt-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9) + '@calendar-extractor';
+
+            let lines = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//CalendarEventExtractor//EN',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH',
+                'BEGIN:VEVENT',
+                'UID:' + uid,
+                'DTSTAMP:' + stamp,
+                dtStartLine,
+                dtEndLine,
+                'SUMMARY:' + icsEscape(evt.title)
+            ];
+
+            if (evt.location) lines.push('LOCATION:' + icsEscape(evt.location));
+            if (evt.description) lines.push('DESCRIPTION:' + icsEscape(evt.description));
+
+            lines.push('END:VEVENT');
+            lines.push('END:VCALENDAR');
+
+            return lines.join('\r\n');
+        }
+
+        function formatICSDate(date) {
+            return date.getFullYear().toString() +
+                String(date.getMonth() + 1).padStart(2, '0') +
+                String(date.getDate()).padStart(2, '0') + 'T' +
+                String(date.getHours()).padStart(2, '0') +
+                String(date.getMinutes()).padStart(2, '0') +
+                String(date.getSeconds()).padStart(2, '0');
+        }
+
+        function icsEscape(str) {
+            if (!str) return '';
+            return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+        }
+
+        // --- Download ---
+        function downloadEvent(index) {
+            const evt = extractedEvents[index];
+            if (!evt) return;
+            const ics = generateICS(evt);
+            const safeTitle = evt.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+            downloadBlob(ics, safeTitle + '.ics', 'text/calendar');
+        }
+
+        function downloadAll() {
+            if (!extractedEvents.length) return;
+
+            // Build a single ICS with multiple VEVENTs
+            const now = new Date();
+            const stamp = formatICSDate(now);
+            let lines = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//CalendarEventExtractor//EN',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH'
+            ];
+
+            extractedEvents.forEach((evt) => {
+                const startClean = (evt.start_date || '').replace(/[-:]/g, '');
+                let dtStartLine, dtEndLine;
+
+                if (evt.all_day || startClean.length <= 8) {
+                    const startDate = startClean.substring(0, 8);
+                    let endDate;
+                    if (evt.end_date) {
+                        endDate = evt.end_date.replace(/[-:]/g, '').substring(0, 8);
+                    } else {
+                        const y = parseInt(startDate.substring(0, 4));
+                        const m = parseInt(startDate.substring(4, 6)) - 1;
+                        const d = parseInt(startDate.substring(6, 8));
+                        const next = new Date(y, m, d + 1);
+                        endDate = next.getFullYear().toString() +
+                            String(next.getMonth() + 1).padStart(2, '0') +
+                            String(next.getDate()).padStart(2, '0');
+                    }
+                    dtStartLine = 'DTSTART;VALUE=DATE:' + startDate;
+                    dtEndLine = 'DTEND;VALUE=DATE:' + endDate;
+                } else {
+                    const startDt = startClean.substring(0, 15);
+                    let endDt;
+                    if (evt.end_date) {
+                        endDt = evt.end_date.replace(/[-:]/g, '').substring(0, 15);
+                    } else {
+                        const y = parseInt(startClean.substring(0, 4));
+                        const mo = parseInt(startClean.substring(4, 6)) - 1;
+                        const d = parseInt(startClean.substring(6, 8));
+                        const h = parseInt(startClean.substring(9, 11));
+                        const mi = parseInt(startClean.substring(11, 13));
+                        const s = parseInt(startClean.substring(13, 15) || '0');
+                        const end = new Date(y, mo, d, h + 1, mi, s);
+                        endDt = formatICSDate(end);
+                    }
+                    dtStartLine = 'DTSTART:' + startDt;
+                    dtEndLine = 'DTEND:' + endDt;
+                }
+
+                const uid = 'evt-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9) + '@calendar-extractor';
+                lines.push('BEGIN:VEVENT');
+                lines.push('UID:' + uid);
+                lines.push('DTSTAMP:' + stamp);
+                lines.push(dtStartLine);
+                lines.push(dtEndLine);
+                lines.push('SUMMARY:' + icsEscape(evt.title));
+                if (evt.location) lines.push('LOCATION:' + icsEscape(evt.location));
+                if (evt.description) lines.push('DESCRIPTION:' + icsEscape(evt.description));
+                lines.push('END:VEVENT');
+            });
+
+            lines.push('END:VCALENDAR');
+            downloadBlob(lines.join('\r\n'), 'all-events.ics', 'text/calendar');
+        }
+
+        function downloadBlob(content, filename, type) {
+            const blob = new Blob([content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        // --- Status Messages ---
+        function showStatus(msg, isError) {
+            const el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg visible' + (isError ? ' error' : '');
+        }
+
+        function hideStatus() {
+            document.getElementById('statusMsg').className = 'status-msg';
+        }
+
+        // --- Init ---
+        loadApiKey();
+        updateExtractBtn();
+    </script>
+</body>
+</html>

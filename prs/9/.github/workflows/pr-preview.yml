@@ -1,0 +1,88 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Deploy PR preview to gh-pages
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Copy PR files to a temp location before switching branches
+          mkdir -p /tmp/pr-content
+          cp -r . /tmp/pr-content/
+          rm -rf /tmp/pr-content/.git
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch or create the gh-pages branch
+          if git ls-remote --exit-code --heads origin gh-pages > /dev/null 2>&1; then
+            git fetch origin gh-pages
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . > /dev/null 2>&1 || true
+            mkdir -p prs
+            cat > index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head><meta charset="UTF-8"><title>PR Previews</title>
+          <style>body{font-family:sans-serif;padding:2rem;}</style></head>
+          <body><h1>PR Previews</h1><p>Preview links are posted as comments on each PR.</p></body>
+          </html>
+          EOF
+            git add index.html prs
+            git commit -m "Initialize gh-pages branch"
+          fi
+
+          # Replace the PR's preview directory with fresh content
+          rm -rf "prs/${PR_NUMBER}"
+          mkdir -p "prs/${PR_NUMBER}"
+          cp -r /tmp/pr-content/. "prs/${PR_NUMBER}/"
+
+          git add "prs/${PR_NUMBER}"
+          git diff --cached --quiet && echo "Nothing to commit" || \
+            git commit -m "Deploy preview for PR #${PR_NUMBER} [skip ci]"
+          git push origin gh-pages
+
+      - name: Post preview URL as PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const url   = `https://${owner}.github.io/${repo}/prs/${pr}/`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: pr,
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('PR Preview')
+            );
+
+            const body = `## 🔍 PR Preview\n\n**URL:** [${url}](${url})\n\n_Updated: ${new Date().toUTCString()}_`;
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: pr, body,
+              });
+            }
