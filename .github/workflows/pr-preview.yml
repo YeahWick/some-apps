@@ -34,16 +34,9 @@ jobs:
           else
             git checkout --orphan gh-pages
             git rm -rf . > /dev/null 2>&1 || true
+            cp -r /tmp/pr-content/. .
             mkdir -p pr
-            cat > index.html <<'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head><meta charset="UTF-8"><title>PR Previews</title>
-          <style>body{font-family:sans-serif;padding:2rem;}</style></head>
-          <body><h1>PR Previews</h1><p>Preview links are posted as comments on each PR.</p></body>
-          </html>
-          EOF
-            git add index.html pr
+            git add .
             git commit -m "Initialize gh-pages branch"
           fi
 
