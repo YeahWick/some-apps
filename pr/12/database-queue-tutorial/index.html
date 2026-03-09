@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MySQL Database Queue Tutorial</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#f0f4ff;--card:#fff;--text:#1e1b4b;
+--purple:#8b5cf6;--pink:#ec4899;--green:#22c55e;--red:#ef4444;
+--blue:#3b82f6;--orange:#f97316;--yellow:#eab308;--cyan:#06b6d4;
+--term-bg:#0f172a;--term-text:#e2e8f0;
+}
+body{background:var(--bg);font-family:'Comic Neue',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px}
+header{text-align:center;padding:40px 20px 20px;position:relative}
+header h1{font-family:'Fredoka One',cursive;font-size:2.4rem;background:linear-gradient(135deg,var(--cyan),var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p.sub{font-size:1.1rem;color:#64748b;margin-top:8px;max-width:600px;margin-left:auto;margin-right:auto}
+.back{position:absolute;top:20px;left:20px;text-decoration:none;font-size:1.5rem;color:var(--blue)}
+.container{max-width:860px;margin:0 auto;padding:0 20px}
+
+/* Progress */
+.progress-wrap{background:#e2e8f0;border-radius:99px;height:14px;margin:20px auto 30px;max-width:500px;overflow:hidden}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--purple));border-radius:99px;transition:width .5s ease}
+
+/* Cards */
+.card{background:var(--card);border-radius:20px;padding:28px;margin-bottom:24px;box-shadow:0 4px 24px rgba(0,0,0,.06);position:relative;overflow:hidden;animation:fadeUp .5s ease both}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.card.blue::before{background:linear-gradient(90deg,var(--cyan),var(--blue))}
+.card.purple::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
+.card.green::before{background:linear-gradient(90deg,var(--green),var(--cyan))}
+.card.orange::before{background:linear-gradient(90deg,var(--orange),var(--yellow))}
+.card.pink::before{background:linear-gradient(90deg,var(--pink),var(--purple))}
+.card.red::before{background:linear-gradient(90deg,var(--red),var(--orange))}
+.card.cyan::before{background:linear-gradient(90deg,var(--cyan),var(--green))}
+.card:nth-child(1){animation-delay:0ms}
+.card:nth-child(2){animation-delay:80ms}
+.card:nth-child(3){animation-delay:160ms}
+.card:nth-child(4){animation-delay:240ms}
+.card:nth-child(5){animation-delay:320ms}
+.card:nth-child(6){animation-delay:400ms}
+.card:nth-child(7){animation-delay:480ms}
+.card:nth-child(8){animation-delay:560ms}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.card h2{font-family:'Fredoka One',cursive;font-size:1.4rem;margin-bottom:8px}
+.card h2 .icon{margin-right:8px}
+.card .desc{color:#64748b;margin-bottom:16px;line-height:1.6}
+.card .concept{background:#f1f5f9;border-left:4px solid var(--blue);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0;font-size:.95rem;line-height:1.6}
+.card .concept.warn{border-left-color:var(--orange);background:#fff7ed}
+.card .concept.good{border-left-color:var(--green);background:#f0fdf4}
+
+/* Terminal */
+.terminal{border-radius:12px;overflow:hidden;margin:14px 0;border:1px solid #1e293b}
+.terminal-bar{background:#1e293b;padding:8px 14px;display:flex;align-items:center;gap:7px;font-size:.8rem;color:#94a3b8}
+.terminal-bar .dot{width:11px;height:11px;border-radius:50%}
+.terminal-bar .dot.r{background:#ef4444}.terminal-bar .dot.y{background:#eab308}.terminal-bar .dot.g{background:#22c55e}
+.terminal-bar .title{margin-left:8px;font-family:'Fira Code',monospace}
+.terminal-body{background:var(--term-bg);color:var(--term-text);padding:16px;font-family:'Fira Code',monospace;font-size:.85rem;line-height:1.7;min-height:60px;max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+.terminal-body .prompt{color:#22d3ee}.terminal-body .cmd{color:#f8fafc}
+.terminal-body .out{color:#94a3b8}.terminal-body .ok{color:#22c55e}.terminal-body .err{color:#ef4444}
+.terminal-body .info{color:#60a5fa}.terminal-body .warn-text{color:#f59e0b}
+.terminal-body .key{color:#c084fc}.terminal-body .val{color:#34d399}
+.terminal-body .dim{color:#475569}.terminal-body .highlight{color:#fbbf24}
+.terminal-body .state-pending{color:#f59e0b}.terminal-body .state-processing{color:#60a5fa}
+.terminal-body .state-completed{color:#22c55e}.terminal-body .state-failed{color:#ef4444}
+.terminal-body .state-dead{color:#94a3b8;text-decoration:line-through}
+
+/* Buttons */
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{padding:10px 20px;border:none;border-radius:12px;font-family:'Comic Neue',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .15s;color:#fff}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
+.btn-blue{background:linear-gradient(135deg,var(--cyan),var(--blue))}
+.btn-purple{background:linear-gradient(135deg,var(--blue),var(--purple))}
+.btn-green{background:linear-gradient(135deg,var(--green),var(--cyan))}
+.btn-orange{background:linear-gradient(135deg,var(--orange),var(--yellow))}
+.btn-pink{background:linear-gradient(135deg,var(--pink),var(--purple))}
+.btn-red{background:linear-gradient(135deg,var(--red),var(--orange))}
+.btn-outline{background:transparent;color:var(--text);border:2px solid #cbd5e1}
+
+/* State diagram */
+.state-diagram{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin:16px 0;padding:16px;background:#f8fafc;border-radius:14px}
+.state-box{padding:10px 18px;border-radius:10px;font-weight:700;font-size:.9rem;text-align:center;min-width:100px}
+.state-box.pending{background:#fef3c7;color:#92400e;border:2px solid #f59e0b}
+.state-box.processing{background:#dbeafe;color:#1e40af;border:2px solid #3b82f6}
+.state-box.completed{background:#dcfce7;color:#166534;border:2px solid #22c55e}
+.state-box.failed{background:#fee2e2;color:#991b1b;border:2px solid #ef4444}
+.state-box.dead{background:#f1f5f9;color:#64748b;border:2px solid #94a3b8}
+.state-arrow{font-size:1.4rem;color:#64748b}
+
+/* Pod grid */
+.pod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pod-card{background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;padding:14px;text-align:center;transition:all .3s}
+.pod-card.active{border-color:var(--green);background:#f0fdf4}
+.pod-card.claiming{border-color:var(--blue);background:#eff6ff;animation:pulse 1s infinite}
+.pod-card.crashed{border-color:var(--red);background:#fef2f2}
+.pod-card .pod-name{font-weight:700;font-size:.9rem;margin-bottom:4px}
+.pod-card .pod-status{font-size:.8rem;color:#64748b}
+.pod-card .pod-jobs{font-size:1.6rem;font-weight:700;margin:6px 0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* Queue viz */
+.queue-viz{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0;padding:14px;background:#f8fafc;border-radius:14px;min-height:50px;align-items:center}
+.queue-item{padding:6px 12px;border-radius:8px;font-size:.8rem;font-weight:700;font-family:'Fira Code',monospace;animation:fadeUp .3s ease both}
+.queue-item.pending{background:#fef3c7;color:#92400e}
+.queue-item.processing{background:#dbeafe;color:#1e40af}
+.queue-item.completed{background:#dcfce7;color:#166534}
+.queue-item.failed{background:#fee2e2;color:#991b1b}
+
+/* Score card */
+.score-card{text-align:center;padding:30px}
+.score-num{font-family:'Fredoka One',cursive;font-size:4rem;background:linear-gradient(135deg,var(--cyan),var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.badge{display:inline-block;padding:4px 12px;border-radius:99px;font-size:.8rem;font-weight:700;margin:3px}
+.badge-done{background:#dcfce7;color:#166534}.badge-todo{background:#f1f5f9;color:#94a3b8}
+
+/* Metric cards */
+.metric-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:14px 0}
+.metric{background:#f8fafc;border-radius:14px;padding:14px;text-align:center}
+.metric .metric-val{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--blue)}
+.metric .metric-label{font-size:.8rem;color:#64748b;margin-top:4px}
+
+/* Toast */
+.toast{position:fixed;bottom:-80px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:14px 28px;border-radius:14px;font-weight:700;font-size:.95rem;transition:bottom .4s ease;z-index:999;white-space:nowrap}
+.toast.show{bottom:30px}
+
+/* Confetti */
+#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:998}
+
+/* Table display */
+.sql-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.85rem;font-family:'Fira Code',monospace}
+.sql-table th{background:#1e293b;color:#e2e8f0;padding:8px 12px;text-align:left;font-weight:500}
+.sql-table td{padding:8px 12px;border-bottom:1px solid #e2e8f0}
+.sql-table tr:nth-child(even){background:#f8fafc}
+.sql-table tr:hover{background:#eff6ff}
+
+@media(max-width:600px){
+header h1{font-size:1.8rem}
+.card{padding:20px}
+.btn{padding:8px 14px;font-size:.85rem}
+.pod-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div class="toast" id="toast"></div>
+
+<header>
+<a href="../" class="back" title="Home">&#8592;</a>
+<h1>MySQL Database Queue</h1>
+<p class="sub">Learn how to use MySQL as a job queue backend, coordinate K8s consumers, handle failures, and manage state &mdash; all interactively!</p>
+</header>
+
+<div class="container">
+<div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: Schema Design -->
+<!-- ============================================================ -->
+<div class="card blue" style="animation-delay:0ms">
+<h2><span class="icon">&#128451;</span> Schema Design</h2>
+<p class="desc">Every database queue starts with a well-designed table. The schema must support atomic claiming, state tracking, retries, and ordering.</p>
+
+<div class="concept">
+<strong>Why MySQL as a queue?</strong> You already have it. Adding RabbitMQ or Redis adds operational burden. For many workloads (< 10k jobs/sec), a well-indexed MySQL table is perfectly sufficient and gives you ACID guarantees for free.
+</div>
+
+<p class="desc">Click below to create the queue table and see the full DDL:</p>
+
+<div class="terminal">
+<div class="terminal-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">mysql</span></div>
+<div class="terminal-body" id="schema-out"><span class="dim">-- Click "Create Table" to generate the schema</span></div>
+</div>
+
+<div class="btn-row">
+<button class="btn btn-blue" onclick="runCreateSchema()">Create Table</button>
+<button class="btn btn-outline" onclick="explainSchema()">Explain Columns</button>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: Job States -->
+<!-- ============================================================ -->
+<div class="card purple" style="animation-delay:80ms">
+<h2><span class="icon">&#128260;</span> Job State Machine</h2>
+<p class="desc">Every job moves through a state machine. Understanding these transitions is critical for building a reliable queue.</p>
+
+<div class="state-diagram" id="state-diagram">
+<div class="state-box pending">PENDING</div>
+<span class="state-arrow">&rarr;</span>
+<div class="state-box processing">PROCESSING</div>
+<span class="state-arrow">&rarr;</span>
+<div class="state-box completed">COMPLETED</div>
+<br>
+<div class="state-box processing" style="opacity:.6">PROCESSING</div>
+<span class="state-arrow">&rarr;</span>
+<div class="state-box failed">FAILED</div>
+<span class="state-arrow">&rarr;</span>
+<div class="state-box pending" style="opacity:.6">PENDING (retry)</div>
+<br>
+<div class="state-box failed" style="opacity:.6">FAILED (max retries)</div>
+<span class="state-arrow">&rarr;</span>
+<div class="state-box dead">DEAD LETTER</div>
+</div>
+
+<div class="terminal">
+<div class="terminal-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">state-transitions</span></div>
+<div class="terminal-body" id="state-out"><span class="dim">-- Click a state to see its transitions and SQL</span></div>
+</div>
+
+<div class="btn-row">
+<button class="btn btn-orange" onclick="showState('pending')">Pending</button>
+<button class="btn btn-blue" onclick="showState('processing')">Processing</button>
+<button class="btn btn-green" onclick="showState('completed')">Completed</button>
+<button class="btn btn-red" onclick="showState('failed')">Failed</button>
+<button class="btn btn-outline" onclick="showState('dead')">Dead Letter</button>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: Producing Jobs -->
+<!-- ============================================================ -->
+<div class="card green" style="animation-delay:160ms">
+<h2><span class="icon">&#128229;</span> Producing Jobs</h2>
+<p class="desc">Producers insert new jobs into the queue. Jobs can have priorities, scheduled execution times, and arbitrary JSON payloads.</p>
+
+<div class="concept">
+<strong>Tip:</strong> Use <code>scheduled_at</code> to implement delayed jobs. A job won't be picked up until <code>NOW() >= scheduled_at</code>. This is great for retry backoff or scheduling future work.
+</div>
+
+<div class="queue-viz" id="produce-viz"></div>
+
+<div class="terminal">
+<div class="terminal-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">mysql</span></div>
+<div class="terminal-body" id="produce-out"><span class="dim">-- Click buttons to enqueue different types of jobs</span></div>
+</div>
+
+<div class="btn-row">
+<button class="btn btn-green" onclick="produceJob('email')">Send Email</button>
+<button class="btn btn-blue" onclick="produceJob('resize')">Resize Image</button>
+<button class="btn btn-purple" onclick="produceJob('report')">Generate Report</button>
+<button class="btn btn-orange" onclick="produceJob('webhook')">Fire Webhook</button>
+<button class="btn btn-outline" onclick="produceBatch()">Batch Insert (100)</button>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: Claiming Jobs (FOR UPDATE SKIP LOCKED) -->
+<!-- ============================================================ -->
+<div class="card orange" style="animation-delay:240ms">
+<h2><span class="icon">&#128274;</span> Claiming Jobs: FOR UPDATE SKIP LOCKED</h2>
+<p class="desc">This is the heart of the database queue pattern. <code>SELECT ... FOR UPDATE SKIP LOCKED</code> lets multiple consumers claim jobs without conflicts or blocking.</p>
+
+<div class="concept warn">
+<strong>Without SKIP LOCKED:</strong> Consumers would block each other waiting for row locks, creating a bottleneck. With <code>SKIP LOCKED</code>, locked rows are silently skipped &mdash; no waiting, no deadlocks.
+</div>
+
+<div class="concept good">
+<strong>The atomic claim pattern:</strong> Wrap SELECT + UPDATE in a single transaction. The SELECT locks the row, then UPDATE sets state to PROCESSING and records which consumer claimed it. No two consumers can claim the same job.
+</div>
+
+<div class="terminal">
+<div class="terminal-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">mysql &mdash; consumer claim</span></div>
+<div class="terminal-body" id="claim-out"><span class="dim">-- Click "Show Claim Query" to see the full pattern</span></div>
+</div>
+
+<div class="btn-row">
+<button class="btn btn-orange" onclick="showClaimQuery()">Show Claim Query</button>
+<button class="btn btn-blue" onclick="simulateClaim()">Simulate Claim</button>
+<button class="btn btn-outline" onclick="showWithoutSkipLocked()">Without SKIP LOCKED</button>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: K8s Consumer Coordination -->
+<!-- ============================================================ -->
+<div class="card pink" style="animation-delay:320ms">
+<h2><span class="icon">&#9781;</span> K8s Consumer Coordination</h2>
+<p class="desc">When multiple Kubernetes pods are consuming from the same queue, coordination happens through the database itself. No external distributed lock needed!</p>
+
+<div class="concept">
+<strong>Consumer Identity:</strong> Each pod registers itself with a unique <code>consumer_id</code> (typically the pod name from the <code>HOSTNAME</code> env var or <code>metadata.name</code>). This is stored on the job when claimed, so you always know which pod is processing what.
+</div>
+
+<div class="pod-grid" id="pod-grid">
+<div class="pod-card" id="pod-0"><div class="pod-name">worker-0</div><div class="pod-jobs">0</div><div class="pod-status">idle</div></div>
+<div class="pod-card" id="pod-1"><div class="pod-name">worker-1</div><div class="pod-jobs">0</div><div class="pod-status">idle</div></div>
+<div class="pod-card" id="pod-2"><div class="pod-name">worker-2</div><div class="pod-jobs">0</div><div class="pod-status">idle</div></div>
+<div class="pod-card" id="pod-3"><div class="pod-name">worker-3</div><div class="pod-jobs">0</div><div class="pod-status">idle</div></div>
+</div>
+
+<div class="queue-viz" id="k8s-queue"></div>
+
+<div class="terminal">
+<div class="terminal-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">k8s-simulation</span></div>
+<div class="terminal-body" id="k8s-out"><span class="dim">-- Simulate K8s pods competing for jobs</span></div>
+</div>
+
+<div class="btn-row">
+<button class="btn btn-pink" onclick="runK8sSim()">Run Simulation</button>
+<button class="btn btn-blue" onclick="showK8sDeployment()">Show K8s YAML</button>
+<button class="btn btn-red" onclick="crashPod()">Crash a Pod</button>
+<button class="btn btn-green" onclick="scalePods()">Scale to 6 Pods</button>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: Failure & Retry Handling -->
+<!-- ============================================================ -->
+<div class="card red" style="animation-delay:400ms">
+<h2><span class="icon">&#128165;</span> Failure Handling & Retries</h2>
+<p class="desc">Jobs fail. Pods crash. Networks timeout. A robust queue must handle all of these gracefully with retries, exponential backoff, and a dead letter queue.</p>
+
+<div class="concept warn">
+<strong>Visibility Timeout:</strong> When a consumer claims a job, set a <code>locked_until</code> timestamp. If the consumer crashes and doesn't complete the job before the timeout, a reaper process will reclaim it. This prevents jobs from being stuck forever.
+</div>
+
+<div class="terminal">
+<div class="terminal-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">failure-simulation</span></div>
+<div class="terminal-body" id="fail-out"><span class="dim">-- Simulate various failure scenarios</span></div>
+</div>
+
+<div class="btn-row">
+<button class="btn btn-red" onclick="simFailure('timeout')">Timeout Failure</button>
+<button class="btn btn-orange" onclick="simFailure('crash')">Pod Crash</button>
+<button class="btn btn-purple" onclick="simFailure('retry')">Retry with Backoff</button>
+<button class="btn btn-outline" onclick="simFailure('reaper')">Run Reaper</button>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 7: Monitoring & Scaling -->
+<!-- ============================================================ -->
+<div class="card cyan" style="animation-delay:480ms">
+<h2><span class="icon">&#128202;</span> Monitoring & Scaling</h2>
+<p class="desc">Monitor your queue health and make scaling decisions based on real metrics. These queries give you instant visibility into your queue.</p>
+
+<div class="metric-row" id="metrics">
+<div class="metric"><div class="metric-val" id="m-pending">0</div><div class="metric-label">Pending</div></div>
+<div class="metric"><div class="metric-val" id="m-processing">0</div><div class="metric-label">Processing</div></div>
+<div class="metric"><div class="metric-val" id="m-completed">0</div><div class="metric-label">Completed</div></div>
+<div class="metric"><div class="metric-val" id="m-failed">0</div><div class="metric-label">Failed</div></div>
+<div class="metric"><div class="metric-val" id="m-rate">0</div><div class="metric-label">Jobs/min</div></div>
+</div>
+
+<div class="terminal">
+<div class="terminal-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">monitoring-queries</span></div>
+<div class="terminal-body" id="monitor-out"><span class="dim">-- Run monitoring queries against the queue</span></div>
+</div>
+
+<div class="btn-row">
+<button class="btn btn-blue" onclick="runMonitor('dashboard')">Queue Dashboard</button>
+<button class="btn btn-green" onclick="runMonitor('throughput')">Throughput Analysis</button>
+<button class="btn btn-orange" onclick="runMonitor('stale')">Find Stale Jobs</button>
+<button class="btn btn-purple" onclick="runMonitor('scaling')">Scaling Decision</button>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCORE CARD -->
+<!-- ============================================================ -->
+<div class="card blue score-card" style="animation-delay:560ms">
+<h2>Tutorial Progress</h2>
+<div class="score-num" id="score">0 / 7</div>
+<p class="desc" style="margin:12px 0">Complete all sections to become a Database Queue Master!</p>
+<div id="badges"></div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+/* ================= STATE ================= */
+const completed = new Set();
+const TOTAL = 7;
+const SECTIONS = ['schema','states','produce','claim','k8s','failures','monitoring'];
+const SECTION_NAMES = {schema:'Schema Design',states:'Job States',produce:'Producing Jobs',claim:'Claiming Jobs',k8s:'K8s Coordination',failures:'Failure Handling',monitoring:'Monitoring'};
+let jobQueue = [];
+let jobIdCounter = 0;
+let podJobs = [0,0,0,0];
+let podCount = 4;
+let statesExplored = new Set();
+let producedTypes = new Set();
+
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+function setTerm(id, html) { const el = $(id); el.innerHTML = html; el.scrollTop = el.scrollHeight; }
+function prompt(cmd) { return `<span class="prompt">mysql&gt; </span><span class="cmd">${cmd}</span>\n`; }
+function spin() { return `<span class="dim">  ...</span>\n`; }
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function markDone(key) {
+  if (completed.has(key)) return;
+  completed.add(key);
+  updateScore();
+  toast('Section complete: ' + SECTION_NAMES[key]);
+  if (completed.size === TOTAL) {
+    setTimeout(() => { launchConfetti(); toast('ALL DONE! You are a Database Queue Master!'); }, 600);
+  }
+}
+
+function updateScore() {
+  $('score').textContent = completed.size + ' / ' + TOTAL;
+  $('progress').style.width = (completed.size / TOTAL * 100) + '%';
+  let h = '';
+  SECTIONS.forEach(s => {
+    h += `<span class="badge ${completed.has(s)?'badge-done':'badge-todo'}">${completed.has(s)?'&#10003;':'&#9744;'} ${SECTION_NAMES[s]}</span> `;
+  });
+  $('badges').innerHTML = h;
+}
+updateScore();
+
+/* ================= SECTION 1: SCHEMA ================= */
+async function runCreateSchema() {
+  const sql = `CREATE TABLE job_queue (
+  id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  queue_name   VARCHAR(100)  NOT NULL DEFAULT 'default',
+  state        ENUM('pending','processing','completed','failed','dead')
+               NOT NULL DEFAULT 'pending',
+  priority     TINYINT       NOT NULL DEFAULT 5,
+  payload      JSON          NOT NULL,
+  result       JSON          DEFAULT NULL,
+  error_msg    TEXT          DEFAULT NULL,
+  attempts     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  max_attempts TINYINT UNSIGNED NOT NULL DEFAULT 3,
+  consumer_id  VARCHAR(255)  DEFAULT NULL,
+  locked_until DATETIME      DEFAULT NULL,
+  scheduled_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  started_at   DATETIME      DEFAULT NULL,
+  completed_at DATETIME      DEFAULT NULL,
+
+  INDEX idx_claim (queue_name, state, scheduled_at, priority),
+  INDEX idx_consumer (consumer_id, state),
+  INDEX idx_reaper (state, locked_until)
+) ENGINE=InnoDB;`;
+
+  setTerm('schema-out', prompt('CREATE TABLE job_queue (...)') + spin());
+  await wait(rand(400, 800));
+  let h = prompt('CREATE TABLE job_queue (...);\n');
+  h += `<span class="out">${sql.replace(/</g,'&lt;')}</span>\n\n`;
+  h += `<span class="ok">Query OK, 0 rows affected (0.02 sec)</span>\n\n`;
+  h += `<span class="info">Table 'job_queue' created with 3 indexes for optimal claim performance.</span>\n`;
+  setTerm('schema-out', h);
+  markDone('schema');
+}
+
+async function explainSchema() {
+  const cols = [
+    ['id', 'BIGINT AUTO_INCREMENT', 'Unique job identifier. BIGINT for high-volume queues.'],
+    ['queue_name', 'VARCHAR(100)', 'Supports multiple logical queues in one table.'],
+    ['state', 'ENUM(...)', 'Current job state. ENUM is compact (1 byte) and validates values.'],
+    ['priority', 'TINYINT', 'Lower = higher priority. Used in ORDER BY for claim query.'],
+    ['payload', 'JSON', 'Arbitrary job data. JSON lets consumers parse what they need.'],
+    ['consumer_id', 'VARCHAR(255)', 'Which K8s pod claimed this job. NULL = unclaimed.'],
+    ['locked_until', 'DATETIME', 'Visibility timeout. Reaper reclaims jobs past this time.'],
+    ['attempts', 'TINYINT', 'How many times this job has been attempted.'],
+    ['max_attempts', 'TINYINT', 'After this many failures, move to dead letter state.'],
+    ['scheduled_at', 'DATETIME', 'Don\'t process before this time. Enables delayed jobs.'],
+  ];
+  let h = prompt('EXPLAIN job_queue;') + '\n';
+  h += '<span class="info">Key columns and their purpose:</span>\n\n';
+  cols.forEach(([name, type, desc]) => {
+    h += `  <span class="key">${name.padEnd(14)}</span> <span class="dim">${type.padEnd(22)}</span> <span class="out">${desc}</span>\n`;
+  });
+  h += '\n<span class="info">Key indexes:</span>\n';
+  h += '  <span class="key">idx_claim   </span> <span class="out">(queue_name, state, scheduled_at, priority) -- The claim query index</span>\n';
+  h += '  <span class="key">idx_consumer</span> <span class="out">(consumer_id, state) -- Find all jobs for a consumer</span>\n';
+  h += '  <span class="key">idx_reaper  </span> <span class="out">(state, locked_until) -- Find stale/timed-out jobs</span>\n';
+  setTerm('schema-out', h);
+  markDone('schema');
+}
+
+/* ================= SECTION 2: STATES ================= */
+async function showState(state) {
+  statesExplored.add(state);
+  const info = {
+    pending: {
+      desc: 'Jobs waiting to be picked up by a consumer.',
+      enter: 'INSERT (new job) or UPDATE (retry from failed)',
+      exit: 'Claimed by consumer -> PROCESSING',
+      sql: `-- Jobs enter PENDING state on creation
+INSERT INTO job_queue (queue_name, payload, priority)
+VALUES ('emails', '{"to":"user@example.com","subject":"Welcome"}', 5);
+
+-- Or when retried after failure
+UPDATE job_queue
+SET state = 'pending',
+    consumer_id = NULL,
+    locked_until = NULL,
+    scheduled_at = DATE_ADD(NOW(), INTERVAL POW(2, attempts) * 10 SECOND)
+WHERE id = ? AND state = 'failed' AND attempts < max_attempts;`
+    },
+    processing: {
+      desc: 'A consumer has claimed this job and is actively working on it.',
+      enter: 'Claimed by consumer via FOR UPDATE SKIP LOCKED',
+      exit: 'Worker completes -> COMPLETED, Worker fails -> FAILED',
+      sql: `-- Transition to PROCESSING happens in the claim transaction
+BEGIN;
+SELECT id, payload FROM job_queue
+WHERE queue_name = 'emails'
+  AND state = 'pending'
+  AND scheduled_at <= NOW()
+ORDER BY priority ASC, id ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+
+UPDATE job_queue
+SET state = 'processing',
+    consumer_id = 'worker-pod-abc123',
+    started_at = NOW(),
+    locked_until = DATE_ADD(NOW(), INTERVAL 5 MINUTE),
+    attempts = attempts + 1
+WHERE id = ?;
+COMMIT;`
+    },
+    completed: {
+      desc: 'Job finished successfully. Keep for auditing, purge periodically.',
+      enter: 'Worker signals success',
+      exit: 'Archived or deleted by cleanup job',
+      sql: `-- Mark job as completed with result
+UPDATE job_queue
+SET state = 'completed',
+    result = '{"message_id":"ses-abc123","status":"delivered"}',
+    completed_at = NOW(),
+    locked_until = NULL
+WHERE id = ? AND state = 'processing' AND consumer_id = 'worker-pod-abc123';
+
+-- Cleanup: delete completed jobs older than 7 days
+DELETE FROM job_queue
+WHERE state = 'completed'
+  AND completed_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
+LIMIT 1000;`
+    },
+    failed: {
+      desc: 'Job encountered an error. Will be retried if attempts < max_attempts.',
+      enter: 'Worker catches an exception or timeout',
+      exit: 'Retried -> PENDING, or max retries reached -> DEAD',
+      sql: `-- Mark job as failed, record the error
+UPDATE job_queue
+SET state = 'failed',
+    error_msg = 'Connection refused: smtp.example.com:587',
+    locked_until = NULL,
+    completed_at = NOW()
+WHERE id = ? AND state = 'processing' AND consumer_id = 'worker-pod-abc123';
+
+-- Retry logic (usually in application code or a cron job)
+UPDATE job_queue
+SET state = CASE
+      WHEN attempts >= max_attempts THEN 'dead'
+      ELSE 'pending'
+    END,
+    consumer_id = NULL,
+    scheduled_at = CASE
+      WHEN attempts < max_attempts
+        THEN DATE_ADD(NOW(), INTERVAL POW(2, attempts) * 10 SECOND)
+      ELSE scheduled_at
+    END
+WHERE state = 'failed';`
+    },
+    dead: {
+      desc: 'Job has exhausted all retries. Requires manual intervention or alerting.',
+      enter: 'Failed with attempts >= max_attempts',
+      exit: 'Manual retry, manual deletion, or archival',
+      sql: `-- Find dead letter jobs that need attention
+SELECT id, queue_name, payload, error_msg, attempts, created_at
+FROM job_queue
+WHERE state = 'dead'
+ORDER BY created_at DESC;
+
+-- Manual retry: reset a dead letter job
+UPDATE job_queue
+SET state = 'pending',
+    attempts = 0,
+    max_attempts = 5,  -- give it more chances
+    consumer_id = NULL,
+    locked_until = NULL,
+    error_msg = NULL,
+    scheduled_at = NOW()
+WHERE id = ? AND state = 'dead';
+
+-- Alert on dead letter accumulation
+SELECT queue_name, COUNT(*) as dead_count
+FROM job_queue WHERE state = 'dead'
+GROUP BY queue_name HAVING dead_count > 10;`
+    }
+  };
+  const s = info[state];
+  let h = prompt(`SHOW STATE '${state.toUpperCase()}';`) + '\n';
+  h += `<span class="info">${s.desc}</span>\n\n`;
+  h += `<span class="key">Enters via:</span> <span class="out">${s.enter}</span>\n`;
+  h += `<span class="key">Exits via: </span> <span class="out">${s.exit}</span>\n\n`;
+  h += `<span class="highlight">-- SQL for this transition:</span>\n`;
+  h += `<span class="out">${s.sql}</span>\n`;
+  setTerm('state-out', h);
+
+  if (statesExplored.size >= 4) markDone('states');
+}
+
+/* ================= SECTION 3: PRODUCING JOBS ================= */
+const JOB_TYPES = {
+  email:   { emoji: '\u2709', name: 'Send Email',        prio: 5, payload: '{"to":"user@example.com","subject":"Welcome!"}' },
+  resize:  { emoji: '\ud83d\uddbc', name: 'Resize Image', prio: 3, payload: '{"src":"s3://bucket/photo.jpg","width":800}' },
+  report:  { emoji: '\ud83d\udcca', name: 'Generate Report', prio: 7, payload: '{"type":"monthly","format":"pdf"}' },
+  webhook: { emoji: '\ud83d\udd14', name: 'Fire Webhook',   prio: 2, payload: '{"url":"https://api.example.com/hook","event":"order.created"}' },
+};
+
+async function produceJob(type) {
+  const j = JOB_TYPES[type];
+  producedTypes.add(type);
+  jobIdCounter++;
+  const id = jobIdCounter;
+  jobQueue.push({ id, type, state: 'pending' });
+
+  const sql = `INSERT INTO job_queue (queue_name, payload, priority)
+VALUES ('${type}', '${j.payload}', ${j.prio});`;
+
+  let h = prompt(sql) + spin();
+  setTerm('produce-out', h);
+  await wait(rand(200, 500));
+
+  h = prompt(sql);
+  h += `<span class="ok">Query OK, 1 row affected (0.01 sec)</span>\n`;
+  h += `<span class="info">Job #${id} enqueued: ${j.name} (priority ${j.prio})</span>\n`;
+  if (jobQueue.length > 1) {
+    h += `\n<span class="dim">Queue depth: ${jobQueue.filter(j=>j.state==='pending').length} pending</span>\n`;
+  }
+  setTerm('produce-out', h);
+  renderQueueViz('produce-viz');
+
+  if (producedTypes.size >= 3) markDone('produce');
+}
+
+async function produceBatch() {
+  let h = prompt('INSERT INTO job_queue (queue_name, payload, priority)\nVALUES ... (100 rows)') + spin();
+  setTerm('produce-out', h);
+  producedTypes.add('batch');
+
+  for (let i = 0; i < 100; i++) {
+    jobIdCounter++;
+    jobQueue.push({ id: jobIdCounter, type: ['email','resize','report','webhook'][rand(0,3)], state: 'pending' });
+  }
+
+  await wait(rand(400, 700));
+  h = prompt('INSERT INTO job_queue (queue_name, payload, priority)\nVALUES ... (100 rows)');
+  h += `<span class="ok">Query OK, 100 rows affected (0.08 sec)</span>\n`;
+  h += `<span class="info">Records: 100  Duplicates: 0  Warnings: 0</span>\n\n`;
+  h += `<span class="dim">Total queue depth: ${jobQueue.filter(j=>j.state==='pending').length} pending jobs</span>\n`;
+  setTerm('produce-out', h);
+  renderQueueViz('produce-viz');
+  markDone('produce');
+}
+
+function renderQueueViz(id) {
+  const el = $(id);
+  const items = jobQueue.slice(-30);
+  el.innerHTML = items.map(j =>
+    `<span class="queue-item ${j.state}">#${j.id}</span>`
+  ).join('');
+}
+
+/* ================= SECTION 4: CLAIMING ================= */
+async function showClaimQuery() {
+  const sql = `-- The atomic claim pattern (single transaction)
+BEGIN;
+
+-- Step 1: Find and lock the next available job
+-- FOR UPDATE = acquire row-level lock
+-- SKIP LOCKED = skip rows locked by other transactions (other consumers)
+SELECT id, payload
+FROM job_queue
+WHERE queue_name = 'emails'
+  AND state = 'pending'
+  AND scheduled_at <= NOW()
+ORDER BY priority ASC, id ASC  -- priority first, then FIFO
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+
+-- Step 2: If a row was returned, claim it
+-- (your application checks the SELECT result)
+UPDATE job_queue
+SET state = 'processing',
+    consumer_id = @@hostname,        -- identifies this consumer
+    started_at = NOW(),
+    locked_until = DATE_ADD(NOW(), INTERVAL 5 MINUTE),  -- visibility timeout
+    attempts = attempts + 1
+WHERE id = @claimed_job_id;
+
+COMMIT;
+
+-- Step 3: Process the job (in application code)
+-- If success: UPDATE state = 'completed'
+-- If failure: UPDATE state = 'failed'`;
+
+  let h = prompt('-- Claim pattern:') + '\n';
+  h += `<span class="out">${sql}</span>\n\n`;
+  h += `<span class="info">Key insights:</span>\n`;
+  h += `<span class="ok">  1.</span> <span class="out">FOR UPDATE locks the selected row for this transaction</span>\n`;
+  h += `<span class="ok">  2.</span> <span class="out">SKIP LOCKED makes other consumers skip this row instantly</span>\n`;
+  h += `<span class="ok">  3.</span> <span class="out">ORDER BY priority ASC, id ASC ensures fair FIFO within priority</span>\n`;
+  h += `<span class="ok">  4.</span> <span class="out">LIMIT 1 claims one job at a time (or use LIMIT N for batches)</span>\n`;
+  h += `<span class="ok">  5.</span> <span class="out">locked_until acts as a visibility timeout for crash recovery</span>\n`;
+  setTerm('claim-out', h);
+  markDone('claim');
+}
+
+async function simulateClaim() {
+  const consumers = ['worker-0', 'worker-1', 'worker-2'];
+  let h = '';
+
+  // Ensure we have some jobs
+  if (jobQueue.filter(j => j.state === 'pending').length < 6) {
+    for (let i = 0; i < 6; i++) {
+      jobIdCounter++;
+      jobQueue.push({ id: jobIdCounter, type: 'email', state: 'pending' });
+    }
+  }
+
+  for (const consumer of consumers) {
+    h += `<span class="info">[${consumer}]</span> `;
+    h += prompt('SELECT ... FOR UPDATE SKIP LOCKED;');
+    setTerm('claim-out', h);
+    await wait(rand(200, 400));
+
+    const pending = jobQueue.find(j => j.state === 'pending');
+    if (pending) {
+      pending.state = 'processing';
+      pending.consumer = consumer;
+      h += `  <span class="ok">Claimed job #${pending.id}</span>\n`;
+      h += `  <span class="dim">UPDATE state='processing', consumer_id='${consumer}'</span>\n\n`;
+    } else {
+      h += `  <span class="warn-text">No pending jobs available</span>\n\n`;
+    }
+    setTerm('claim-out', h);
+  }
+
+  h += `<span class="info">All 3 consumers claimed different jobs simultaneously!</span>\n`;
+  h += `<span class="dim">No conflicts, no blocking, no deadlocks.</span>\n`;
+  setTerm('claim-out', h);
+  markDone('claim');
+}
+
+async function showWithoutSkipLocked() {
+  let h = prompt('-- WITHOUT SKIP LOCKED (bad!)') + '\n';
+  h += `<span class="err">What happens without SKIP LOCKED:</span>\n\n`;
+  h += `<span class="warn-text">  Consumer A:</span> <span class="out">SELECT ... FOR UPDATE</span>  <span class="ok">-- gets row, locks it</span>\n`;
+  h += `<span class="warn-text">  Consumer B:</span> <span class="out">SELECT ... FOR UPDATE</span>  <span class="err">-- BLOCKS! Waiting for A's lock...</span>\n`;
+  h += `<span class="warn-text">  Consumer C:</span> <span class="out">SELECT ... FOR UPDATE</span>  <span class="err">-- BLOCKS! Waiting behind B...</span>\n\n`;
+  h += `<span class="err">Result: Consumers process jobs SEQUENTIALLY, not in parallel!</span>\n`;
+  h += `<span class="err">Even worse: with multiple rows, you risk DEADLOCKS.</span>\n\n`;
+  h += `<span class="info">With SKIP LOCKED:</span>\n`;
+  h += `<span class="ok">  Consumer A:</span> <span class="out">SELECT ... FOR UPDATE SKIP LOCKED</span>  <span class="ok">-- gets row 1</span>\n`;
+  h += `<span class="ok">  Consumer B:</span> <span class="out">SELECT ... FOR UPDATE SKIP LOCKED</span>  <span class="ok">-- skips row 1, gets row 2</span>\n`;
+  h += `<span class="ok">  Consumer C:</span> <span class="out">SELECT ... FOR UPDATE SKIP LOCKED</span>  <span class="ok">-- skips rows 1&2, gets row 3</span>\n\n`;
+  h += `<span class="ok">Result: True parallel processing! No blocking, no deadlocks.</span>\n`;
+  setTerm('claim-out', h);
+  markDone('claim');
+}
+
+/* ================= SECTION 5: K8S ================= */
+async function runK8sSim() {
+  // Reset
+  podJobs = new Array(podCount).fill(0);
+  const totalJobs = 20;
+  let h = `<span class="info">Simulating ${podCount} K8s pods competing for ${totalJobs} jobs...</span>\n\n`;
+  setTerm('k8s-out', h);
+
+  // Create jobs
+  const simJobs = [];
+  for (let i = 0; i < totalJobs; i++) {
+    simJobs.push({ id: i + 1, state: 'pending', consumer: null });
+  }
+  renderK8sQueue(simJobs);
+
+  for (const job of simJobs) {
+    // Random pod claims
+    const pod = rand(0, podCount - 1);
+    const podName = `worker-${pod}`;
+
+    job.state = 'processing';
+    job.consumer = podName;
+    podJobs[pod]++;
+
+    // Update pod card
+    updatePodCard(pod, 'claiming', podJobs[pod], 'claiming #' + job.id);
+    h += `<span class="info">[${podName}]</span> <span class="out">Claimed job #${job.id}</span>\n`;
+    setTerm('k8s-out', h);
+    renderK8sQueue(simJobs);
+    await wait(rand(80, 200));
+
+    // Complete it
+    job.state = 'completed';
+    updatePodCard(pod, 'active', podJobs[pod], 'processing');
+    renderK8sQueue(simJobs);
+    await wait(rand(50, 120));
+  }
+
+  h += `\n<span class="ok">All ${totalJobs} jobs processed!</span>\n\n`;
+  h += `<span class="info">Distribution:</span>\n`;
+  for (let i = 0; i < podCount; i++) {
+    const bar = '\u2588'.repeat(podJobs[i]);
+    h += `  <span class="key">worker-${i}:</span> <span class="val">${bar}</span> <span class="dim">${podJobs[i]} jobs</span>\n`;
+  }
+  h += `\n<span class="dim">Note: Distribution isn't perfectly even -- that's expected with random claim timing.\nIn production, the pod that finishes first claims next. Faster pods naturally get more work.</span>\n`;
+  setTerm('k8s-out', h);
+
+  for (let i = 0; i < podCount; i++) updatePodCard(i, 'active', podJobs[i], 'idle');
+  markDone('k8s');
+}
+
+function updatePodCard(idx, className, jobs, status) {
+  const card = $('pod-' + idx);
+  if (!card) return;
+  card.className = 'pod-card ' + className;
+  card.querySelector('.pod-jobs').textContent = jobs;
+  card.querySelector('.pod-status').textContent = status;
+}
+
+function renderK8sQueue(jobs) {
+  const el = $('k8s-queue');
+  const recent = jobs.slice(-20);
+  el.innerHTML = recent.map(j =>
+    `<span class="queue-item ${j.state}">#${j.id}</span>`
+  ).join('');
+}
+
+async function showK8sDeployment() {
+  const yaml = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue-worker
+spec:
+  replicas: 4              # Number of consumer pods
+  selector:
+    matchLabels:
+      app: queue-worker
+  template:
+    metadata:
+      labels:
+        app: queue-worker
+    spec:
+      containers:
+      - name: worker
+        image: myapp/queue-worker:latest
+        env:
+        - name: CONSUMER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name    # Pod name as consumer ID
+        - name: DB_HOST
+          value: mysql-primary.db.svc.cluster.local
+        - name: QUEUE_NAME
+          value: "emails"
+        - name: POLL_INTERVAL_MS
+          value: "1000"              # Poll every second
+        - name: VISIBILITY_TIMEOUT_SEC
+          value: "300"               # 5 minute lock
+        - name: BATCH_SIZE
+          value: "1"                 # Jobs per claim
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", "pgrep -f worker"]
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+---
+# HPA for auto-scaling based on queue depth
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: queue-worker-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: queue-worker
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  - type: External
+    external:
+      metric:
+        name: mysql_queue_pending_jobs    # Custom metric from Prometheus
+      target:
+        type: AverageValue
+        averageValue: "50"               # Scale up if > 50 pending per pod`;
+
+  let h = prompt('cat k8s/queue-worker.yaml') + '\n';
+  h += `<span class="out">${yaml}</span>\n\n`;
+  h += `<span class="info">Key points:</span>\n`;
+  h += `<span class="ok">  1.</span> <span class="out">metadata.name as CONSUMER_ID -- each pod has a unique identity</span>\n`;
+  h += `<span class="ok">  2.</span> <span class="out">POLL_INTERVAL_MS -- how often to check for new jobs</span>\n`;
+  h += `<span class="ok">  3.</span> <span class="out">VISIBILITY_TIMEOUT_SEC -- must be > max job processing time</span>\n`;
+  h += `<span class="ok">  4.</span> <span class="out">HPA scales based on custom queue depth metric from Prometheus</span>\n`;
+  h += `<span class="ok">  5.</span> <span class="out">livenessProbe ensures crashed workers get restarted by K8s</span>\n`;
+  setTerm('k8s-out', h);
+  markDone('k8s');
+}
+
+async function crashPod() {
+  const crashIdx = rand(0, podCount - 1);
+  const podName = `worker-${crashIdx}`;
+  updatePodCard(crashIdx, 'crashed', podJobs[crashIdx], 'CRASHED!');
+
+  let h = `<span class="err">[${podName}] Pod crashed! OOMKilled</span>\n\n`;
+  h += `<span class="warn-text">What happens to its in-flight jobs?</span>\n\n`;
+  h += `<span class="out">1. The pod's jobs are still in state='processing'</span>\n`;
+  h += `<span class="out">2. Their locked_until timestamps will eventually expire</span>\n`;
+  h += `<span class="out">3. The reaper process detects them:</span>\n\n`;
+  h += `<span class="key">   UPDATE job_queue</span>\n`;
+  h += `<span class="key">   SET state = 'pending',</span>\n`;
+  h += `<span class="key">       consumer_id = NULL,</span>\n`;
+  h += `<span class="key">       locked_until = NULL</span>\n`;
+  h += `<span class="key">   WHERE state = 'processing'</span>\n`;
+  h += `<span class="key">     AND consumer_id = '${podName}'</span>\n`;
+  h += `<span class="key">     AND locked_until < NOW();</span>\n\n`;
+  h += `<span class="ok">4. Jobs become available for other consumers to claim</span>\n`;
+  h += `<span class="ok">5. K8s restarts the crashed pod via Deployment controller</span>\n`;
+  setTerm('k8s-out', h);
+  await wait(2000);
+
+  // Recover
+  updatePodCard(crashIdx, 'active', 0, 'restarted');
+  h += `\n<span class="ok">[${podName}] Pod restarted by K8s. Resuming work...</span>\n`;
+  setTerm('k8s-out', h);
+  podJobs[crashIdx] = 0;
+  markDone('k8s');
+}
+
+async function scalePods() {
+  if (podCount >= 6) {
+    toast('Already at 6 pods!');
+    return;
+  }
+  const grid = $('pod-grid');
+  for (let i = podCount; i < 6; i++) {
+    const div = document.createElement('div');
+    div.className = 'pod-card';
+    div.id = 'pod-' + i;
+    div.innerHTML = `<div class="pod-name">worker-${i}</div><div class="pod-jobs">0</div><div class="pod-status">scaling up</div>`;
+    grid.appendChild(div);
+    podJobs.push(0);
+  }
+  podCount = 6;
+
+  let h = `<span class="info">kubectl scale deployment queue-worker --replicas=6</span>\n\n`;
+  h += `<span class="out">deployment.apps/queue-worker scaled</span>\n\n`;
+  setTerm('k8s-out', h);
+  await wait(rand(500, 1000));
+
+  for (let i = 4; i < 6; i++) {
+    h += `<span class="ok">[worker-${i}] Pod Ready -- joining consumer pool</span>\n`;
+    updatePodCard(i, 'active', 0, 'idle');
+    setTerm('k8s-out', h);
+    await wait(rand(200, 400));
+  }
+
+  h += `\n<span class="info">All 6 consumers now polling the same queue table.</span>\n`;
+  h += `<span class="dim">FOR UPDATE SKIP LOCKED ensures no conflicts even at higher concurrency.</span>\n`;
+  setTerm('k8s-out', h);
+  markDone('k8s');
+}
+
+/* ================= SECTION 6: FAILURES ================= */
+async function simFailure(mode) {
+  let h = '';
+  if (mode === 'timeout') {
+    h += prompt('-- Simulating visibility timeout scenario') + '\n';
+    h += `<span class="warn-text">Scenario: worker-2 claims job #42, but processing takes too long</span>\n\n`;
+    setTerm('fail-out', h);
+    await wait(400);
+
+    h += `<span class="info">[T+0s]</span>   <span class="out">worker-2 claims job #42, locked_until = NOW() + 5min</span>\n`;
+    setTerm('fail-out', h);
+    await wait(300);
+    h += `<span class="info">[T+1m]</span>   <span class="out">worker-2 still processing... (API call pending)</span>\n`;
+    setTerm('fail-out', h);
+    await wait(300);
+    h += `<span class="info">[T+3m]</span>   <span class="warn-text">worker-2 still processing... (slow external service)</span>\n`;
+    setTerm('fail-out', h);
+    await wait(300);
+    h += `<span class="info">[T+5m]</span>   <span class="err">locked_until has passed! Job is now "stale"</span>\n`;
+    setTerm('fail-out', h);
+    await wait(300);
+    h += `<span class="info">[T+5m]</span>   <span class="ok">Reaper process finds stale job, resets to pending</span>\n\n`;
+    h += `<span class="warn-text">Problem:</span> <span class="out">worker-2 might still complete the job after reaper reclaims it!</span>\n`;
+    h += `<span class="ok">Solution:</span> <span class="out">Use a version/generation counter. Worker checks it before marking complete:</span>\n\n`;
+    h += `<span class="key">UPDATE job_queue SET state = 'completed'</span>\n`;
+    h += `<span class="key">WHERE id = 42 AND consumer_id = 'worker-2' AND state = 'processing';</span>\n\n`;
+    h += `<span class="dim">If reaper already reclaimed it, this UPDATE affects 0 rows -- worker knows to discard.</span>\n`;
+    setTerm('fail-out', h);
+
+  } else if (mode === 'crash') {
+    h += prompt('-- Simulating pod crash mid-processing') + '\n';
+    h += `<span class="err">worker-1 crashed: OOMKilled (memory limit exceeded)</span>\n\n`;
+    setTerm('fail-out', h);
+    await wait(400);
+
+    h += `<span class="out">Jobs owned by worker-1:</span>\n`;
+    h += `  <span class="state-processing">#15 state=processing locked_until=2024-01-15 10:05:00</span>\n`;
+    h += `  <span class="state-processing">#16 state=processing locked_until=2024-01-15 10:05:30</span>\n\n`;
+    setTerm('fail-out', h);
+    await wait(500);
+
+    h += `<span class="warn-text">These jobs will be stuck until locked_until expires.</span>\n`;
+    h += `<span class="info">But K8s detects the crash and restarts the pod!</span>\n\n`;
+    h += `<span class="out">Option 1: Wait for visibility timeout (passive recovery)</span>\n`;
+    h += `<span class="out">Option 2: Immediate recovery with graceful shutdown handler:</span>\n\n`;
+    h += `<span class="key">// In your application's shutdown handler:</span>\n`;
+    h += `<span class="key">process.on('SIGTERM', async () => {</span>\n`;
+    h += `<span class="key">  // Release all claimed jobs back to pending</span>\n`;
+    h += `<span class="key">  await db.query(\`</span>\n`;
+    h += `<span class="key">    UPDATE job_queue</span>\n`;
+    h += `<span class="key">    SET state = 'pending', consumer_id = NULL, locked_until = NULL</span>\n`;
+    h += `<span class="key">    WHERE consumer_id = ? AND state = 'processing'\`,</span>\n`;
+    h += `<span class="key">    [CONSUMER_ID]</span>\n`;
+    h += `<span class="key">  );</span>\n`;
+    h += `<span class="key">  process.exit(0);</span>\n`;
+    h += `<span class="key">});</span>\n`;
+    setTerm('fail-out', h);
+
+  } else if (mode === 'retry') {
+    h += prompt('-- Simulating exponential backoff retry') + '\n';
+    const attempts = [
+      { n: 1, delay: '10s',  time: '10:00:10', result: 'fail', err: 'Connection timeout' },
+      { n: 2, delay: '40s',  time: '10:00:50', result: 'fail', err: 'Connection refused' },
+      { n: 3, delay: '80s',  time: '10:02:10', result: 'ok',   err: null },
+    ];
+
+    for (const a of attempts) {
+      h += `<span class="info">[Attempt ${a.n}/3]</span> <span class="dim">scheduled_at = ${a.time} (backoff: ${a.delay})</span>\n`;
+      setTerm('fail-out', h);
+      await wait(rand(300, 600));
+
+      if (a.result === 'fail') {
+        h += `  <span class="err">FAILED: ${a.err}</span>\n`;
+        h += `  <span class="dim">Backoff formula: POW(2, ${a.n}) * 10 = ${Math.pow(2, a.n) * 10}s</span>\n\n`;
+      } else {
+        h += `  <span class="ok">SUCCESS! Job completed on attempt ${a.n}</span>\n\n`;
+      }
+      setTerm('fail-out', h);
+    }
+
+    h += `<span class="info">Exponential backoff SQL:</span>\n`;
+    h += `<span class="key">scheduled_at = DATE_ADD(NOW(), INTERVAL POW(2, attempts) * 10 SECOND)</span>\n\n`;
+    h += `<span class="dim">Attempt 1: 20s  |  Attempt 2: 40s  |  Attempt 3: 80s  |  Attempt 4: 160s</span>\n`;
+    setTerm('fail-out', h);
+
+  } else if (mode === 'reaper') {
+    h += prompt('-- Running reaper process (cron job or dedicated pod)') + '\n\n';
+    setTerm('fail-out', h);
+    await wait(300);
+
+    h += `<span class="info">Step 1: Find stale processing jobs</span>\n`;
+    h += `<span class="key">SELECT id, consumer_id, locked_until, attempts, max_attempts</span>\n`;
+    h += `<span class="key">FROM job_queue</span>\n`;
+    h += `<span class="key">WHERE state = 'processing' AND locked_until < NOW();</span>\n\n`;
+    setTerm('fail-out', h);
+    await wait(400);
+
+    const stale = [
+      { id: 15, consumer: 'worker-1', attempts: 1, max: 3 },
+      { id: 42, consumer: 'worker-3', attempts: 3, max: 3 },
+    ];
+
+    h += `<span class="out">Found ${stale.length} stale jobs:</span>\n`;
+    stale.forEach(j => {
+      h += `  <span class="warn-text">#${j.id}</span> consumer=${j.consumer} attempts=${j.attempts}/${j.max}\n`;
+    });
+    h += '\n';
+    setTerm('fail-out', h);
+    await wait(400);
+
+    h += `<span class="info">Step 2: Re-queue or dead-letter</span>\n`;
+    h += `<span class="key">UPDATE job_queue</span>\n`;
+    h += `<span class="key">SET state = CASE</span>\n`;
+    h += `<span class="key">      WHEN attempts >= max_attempts THEN 'dead'</span>\n`;
+    h += `<span class="key">      ELSE 'pending'</span>\n`;
+    h += `<span class="key">    END,</span>\n`;
+    h += `<span class="key">    consumer_id = NULL,</span>\n`;
+    h += `<span class="key">    locked_until = NULL,</span>\n`;
+    h += `<span class="key">    scheduled_at = CASE</span>\n`;
+    h += `<span class="key">      WHEN attempts < max_attempts</span>\n`;
+    h += `<span class="key">        THEN DATE_ADD(NOW(), INTERVAL POW(2, attempts) * 10 SECOND)</span>\n`;
+    h += `<span class="key">      ELSE scheduled_at END</span>\n`;
+    h += `<span class="key">WHERE state = 'processing' AND locked_until < NOW();</span>\n\n`;
+    setTerm('fail-out', h);
+    await wait(400);
+
+    h += `<span class="ok">  #15: attempts 1/3 -> re-queued as PENDING (next attempt in 20s)</span>\n`;
+    h += `<span class="err">  #42: attempts 3/3 -> moved to DEAD LETTER (requires manual review)</span>\n\n`;
+    h += `<span class="dim">Run this reaper as a K8s CronJob every 60 seconds.</span>\n`;
+    setTerm('fail-out', h);
+  }
+
+  markDone('failures');
+}
+
+/* ================= SECTION 7: MONITORING ================= */
+async function runMonitor(mode) {
+  let h = '';
+  const pending = rand(40, 200);
+  const processing = rand(3, 12);
+  const completedN = rand(1000, 9999);
+  const failed = rand(2, 15);
+  const rate = rand(20, 150);
+
+  $('m-pending').textContent = pending;
+  $('m-processing').textContent = processing;
+  $('m-completed').textContent = completedN;
+  $('m-failed').textContent = failed;
+  $('m-rate').textContent = rate;
+
+  if (mode === 'dashboard') {
+    h += prompt('-- Queue health dashboard') + '\n';
+    setTerm('monitor-out', h);
+    await wait(rand(200, 400));
+
+    h += `<span class="info">Queue Status Summary:</span>\n`;
+    h += `<span class="key">SELECT state, COUNT(*) as count FROM job_queue GROUP BY state;</span>\n\n`;
+    h += `  <span class="state-pending">  PENDING:    ${pending}</span>     `;
+    h += `<span class="state-processing">PROCESSING: ${processing}</span>\n`;
+    h += `  <span class="state-completed">COMPLETED:  ${completedN}</span>    `;
+    h += `<span class="state-failed">  FAILED:     ${failed}</span>\n\n`;
+
+    h += `<span class="info">Active Consumers:</span>\n`;
+    h += `<span class="key">SELECT consumer_id, COUNT(*) FROM job_queue</span>\n`;
+    h += `<span class="key">WHERE state = 'processing' GROUP BY consumer_id;</span>\n\n`;
+    for (let i = 0; i < podCount; i++) {
+      const n = rand(0, 3);
+      h += `  <span class="val">worker-${i}</span>  <span class="out">${'\u2588'.repeat(n)} ${n} active jobs</span>\n`;
+    }
+    h += `\n<span class="info">Oldest Pending Job:</span>\n`;
+    h += `  <span class="warn-text">Age: ${rand(1,45)} minutes</span> <span class="dim">(target: < 5 min)</span>\n`;
+    setTerm('monitor-out', h);
+
+  } else if (mode === 'throughput') {
+    h += prompt('-- Throughput analysis (last hour)') + '\n';
+    setTerm('monitor-out', h);
+    await wait(rand(200, 400));
+
+    h += `<span class="key">SELECT</span>\n`;
+    h += `<span class="key">  DATE_FORMAT(completed_at, '%H:%i') as minute,</span>\n`;
+    h += `<span class="key">  COUNT(*) as completed</span>\n`;
+    h += `<span class="key">FROM job_queue</span>\n`;
+    h += `<span class="key">WHERE state = 'completed'</span>\n`;
+    h += `<span class="key">  AND completed_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)</span>\n`;
+    h += `<span class="key">GROUP BY minute ORDER BY minute;</span>\n\n`;
+
+    h += `<span class="info">Throughput (jobs/minute):</span>\n`;
+    for (let i = 0; i < 10; i++) {
+      const t = rand(10, rate);
+      const bar = '\u2588'.repeat(Math.round(t / 3));
+      const min = String(i * 6).padStart(2, '0');
+      h += `  <span class="dim">:${min}</span> <span class="val">${bar}</span> <span class="out">${t}</span>\n`;
+    }
+    h += `\n<span class="info">Avg: ${rate} jobs/min | Peak: ${rate + rand(20,50)} jobs/min</span>\n`;
+    h += `<span class="dim">Avg processing time: ${rand(200,2000)}ms per job</span>\n`;
+    setTerm('monitor-out', h);
+
+  } else if (mode === 'stale') {
+    h += prompt('-- Finding stale/stuck jobs') + '\n';
+    setTerm('monitor-out', h);
+    await wait(rand(200, 400));
+
+    h += `<span class="key">SELECT id, consumer_id,</span>\n`;
+    h += `<span class="key">  TIMESTAMPDIFF(MINUTE, started_at, NOW()) as minutes_processing,</span>\n`;
+    h += `<span class="key">  locked_until < NOW() as lock_expired</span>\n`;
+    h += `<span class="key">FROM job_queue</span>\n`;
+    h += `<span class="key">WHERE state = 'processing'</span>\n`;
+    h += `<span class="key">  AND started_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE);</span>\n\n`;
+
+    const staleCount = rand(0, 3);
+    if (staleCount > 0) {
+      h += `<span class="err">Found ${staleCount} stale jobs:</span>\n`;
+      for (let i = 0; i < staleCount; i++) {
+        const mins = rand(11, 60);
+        const expired = mins > 5;
+        h += `  <span class="warn-text">#${rand(100,999)}</span> worker-${rand(0,3)} | ${mins}min | lock_expired: <span class="${expired?'err':'ok'}">${expired?'YES':'NO'}</span>\n`;
+      }
+      h += `\n<span class="warn-text">Action: Run reaper to reclaim expired jobs</span>\n`;
+    } else {
+      h += `<span class="ok">No stale jobs found! Queue is healthy.</span>\n`;
+    }
+    setTerm('monitor-out', h);
+
+  } else if (mode === 'scaling') {
+    h += prompt('-- Scaling decision analysis') + '\n';
+    setTerm('monitor-out', h);
+    await wait(rand(200, 400));
+
+    const queueDepth = pending;
+    const consumers = podCount;
+    const avgTime = rand(200, 2000);
+    const perPodRate = Math.round(60000 / avgTime);
+    const totalRate = perPodRate * consumers;
+    const eta = Math.round(queueDepth / totalRate);
+
+    h += `<span class="info">Current capacity analysis:</span>\n\n`;
+    h += `  <span class="key">Queue depth:       </span> <span class="val">${queueDepth} pending jobs</span>\n`;
+    h += `  <span class="key">Active consumers:  </span> <span class="val">${consumers} pods</span>\n`;
+    h += `  <span class="key">Avg process time:  </span> <span class="val">${avgTime}ms/job</span>\n`;
+    h += `  <span class="key">Per-pod throughput: </span> <span class="val">${perPodRate} jobs/min</span>\n`;
+    h += `  <span class="key">Total throughput:   </span> <span class="val">${totalRate} jobs/min</span>\n`;
+    h += `  <span class="key">Time to drain:     </span> <span class="val">${eta} min</span>\n\n`;
+
+    const recommendation = queueDepth > 100 ? 'SCALE UP' : queueDepth < 10 ? 'SCALE DOWN' : 'HOLD';
+    const recColor = queueDepth > 100 ? 'err' : queueDepth < 10 ? 'ok' : 'info';
+
+    h += `<span class="${recColor}">Recommendation: ${recommendation}</span>\n\n`;
+
+    if (recommendation === 'SCALE UP') {
+      const target = Math.ceil(queueDepth / 50);
+      h += `<span class="warn-text">Queue depth exceeds threshold (100).</span>\n`;
+      h += `<span class="ok">Suggested replicas: ${target} (to maintain < 50 jobs/pod)</span>\n`;
+      h += `<span class="dim">kubectl scale deployment queue-worker --replicas=${target}</span>\n`;
+    } else if (recommendation === 'SCALE DOWN') {
+      h += `<span class="ok">Queue is nearly empty. Consider reducing replicas to save resources.</span>\n`;
+      h += `<span class="dim">kubectl scale deployment queue-worker --replicas=2</span>\n`;
+    } else {
+      h += `<span class="ok">Current capacity matches workload. No scaling needed.</span>\n`;
+    }
+    setTerm('monitor-out', h);
+  }
+
+  markDone('monitoring');
+}
+
+/* ================= CONFETTI ================= */
+function launchConfetti() {
+  const canvas = $('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = [];
+  const colors = ['#8b5cf6','#ec4899','#22c55e','#3b82f6','#f97316','#eab308','#06b6d4'];
+  for (let i = 0; i < 150; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: rand(6, 12), h: rand(4, 8),
+      color: colors[rand(0, colors.length - 1)],
+      vy: rand(2, 6), vx: rand(-2, 2),
+      rot: Math.random() * 360,
+      vr: rand(-5, 5)
+    });
+  }
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.y += p.vy; p.x += p.vx; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 180) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+</script>
+</body>
+</html>
