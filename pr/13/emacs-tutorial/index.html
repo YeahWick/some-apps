@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emacs Tutorials</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&family=Fira+Code:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --purple-dark: #5b21b6;
+    --pink: #ec4899;
+    --yellow: #fbbf24;
+    --green: #34d399;
+    --green-dark: #059669;
+    --blue: #60a5fa;
+    --orange: #fb923c;
+    --indigo: #6366f1;
+    --bg: #f0e6ff;
+    --card-bg: #ffffff;
+  }
+
+  body {
+    font-family: 'Comic Neue', cursive, sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(99,102,241,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(124,58,237,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(236,72,153,0.05) 0%, transparent 60%);
+    min-height: 100vh;
+    color: #1e1b4b;
+    overflow-x: hidden;
+  }
+
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.10;
+    z-index: 0;
+    animation: blobFloat 8s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .blob-1 { width: 300px; height: 300px; background: var(--indigo); top: -80px; left: -60px; }
+  .blob-2 { width: 200px; height: 200px; background: var(--purple); bottom: 10%; right: -40px; animation-delay: -3s; }
+  .blob-3 { width: 250px; height: 250px; background: var(--pink); top: 40%; left: 70%; animation-delay: -5s; }
+
+  @keyframes blobFloat {
+    to { transform: translate(30px, 20px) scale(1.08); }
+  }
+
+  header {
+    text-align: center;
+    padding: 50px 20px 30px;
+    position: relative;
+    z-index: 1;
+  }
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    background: linear-gradient(135deg, var(--indigo), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(2px 4px 0 rgba(99,102,241,0.18));
+    margin-bottom: 8px;
+  }
+  header .mascot {
+    font-size: 3.6rem;
+    animation: bounce 1.6s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  header p {
+    font-size: 1.15rem;
+    color: #6b7280;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  header .subtitle {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  header .tag {
+    background: linear-gradient(135deg, var(--indigo), var(--purple));
+    color: #fff;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 50px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--indigo);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    transition: opacity 0.2s;
+  }
+  .back-link:hover { opacity: 0.7; }
+
+  .tutorial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 28px;
+    margin-top: 10px;
+  }
+
+  .tutorial-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 0;
+    box-shadow: 0 4px 24px rgba(99,102,241,0.10), 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+  .tutorial-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(99,102,241,0.18), 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  .tutorial-card .card-banner {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tutorial-card .card-banner .banner-emoji {
+    font-size: 4.5rem;
+    z-index: 1;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  }
+
+  .tutorial-card .card-banner .banner-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+  }
+
+  .banner-calc {
+    background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
+  }
+  .banner-diary {
+    background: linear-gradient(135deg, #059669 0%, #34d399 100%);
+  }
+
+  .card-body {
+    padding: 24px 28px 28px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-body h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.45rem;
+    margin-bottom: 10px;
+    color: #1e1b4b;
+  }
+
+  .card-body .card-desc {
+    font-size: 0.98rem;
+    color: #6b7280;
+    line-height: 1.6;
+    flex: 1;
+    margin-bottom: 16px;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .card-tags .ctag {
+    padding: 3px 12px;
+    border-radius: 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .ctag-purple { background: #ede9fe; color: #6d28d9; }
+  .ctag-green  { background: #d1fae5; color: #047857; }
+  .ctag-blue   { background: #dbeafe; color: #1d4ed8; }
+  .ctag-orange { background: #ffedd5; color: #c2410c; }
+  .ctag-pink   { background: #fce7f3; color: #be185d; }
+
+  .card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 10px 22px;
+    border-radius: 50px;
+    border: none;
+    color: #fff;
+    transition: opacity 0.2s, transform 0.15s;
+    text-decoration: none;
+    align-self: flex-start;
+  }
+  .card-cta:hover { opacity: 0.85; transform: scale(1.03); }
+
+  .cta-purple { background: linear-gradient(135deg, var(--indigo), var(--purple)); }
+  .cta-green  { background: linear-gradient(135deg, var(--green-dark), var(--green)); }
+
+  .card-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #9ca3af;
+    margin-bottom: 8px;
+  }
+
+  .coming-soon {
+    position: relative;
+  }
+  .coming-soon .card-body::after {
+    content: '';
+  }
+
+  @media (max-width: 600px) {
+    .tutorial-grid {
+      grid-template-columns: 1fr;
+    }
+    .card-body { padding: 20px 22px 24px; }
+    .tutorial-card .card-banner { height: 140px; }
+    .tutorial-card .card-banner .banner-emoji { font-size: 3.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<header>
+  <div class="mascot">&#129302;</div>
+  <h1>Emacs Tutorials</h1>
+  <p>Learn <strong>Emacs Lisp</strong> by building real applications! Each tutorial teaches new concepts through hands-on, interactive projects.</p>
+  <div class="subtitle">
+    <span class="tag">Emacs Lisp</span>
+    <span class="tag">Interactive</span>
+    <span class="tag">Learn by Doing</span>
+  </div>
+</header>
+
+<div class="container">
+  <a href="../index.html" class="back-link">&#8592; Back to Home</a>
+
+  <div class="tutorial-grid">
+
+    <!-- Calculator Tutorial -->
+    <a href="calculator.html" class="tutorial-card">
+      <div class="card-banner banner-calc">
+        <div class="banner-bg" style="background: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 12px);"></div>
+        <span class="banner-emoji">&#128425;</span>
+      </div>
+      <div class="card-body">
+        <span class="card-level">&#11088; Beginner</span>
+        <h2>Calculator</h2>
+        <p class="card-desc">Build a fully working calculator from scratch. Learn <strong>defvar</strong>, <strong>defun</strong>, keymaps, and major modes while creating an interactive app with buttons and display.</p>
+        <div class="card-tags">
+          <span class="ctag ctag-purple">defvar</span>
+          <span class="ctag ctag-blue">defun</span>
+          <span class="ctag ctag-orange">keymaps</span>
+          <span class="ctag ctag-pink">major-mode</span>
+        </div>
+        <span class="card-cta cta-purple">Start Tutorial &#8594;</span>
+      </div>
+    </a>
+
+    <!-- Diary Tutorial -->
+    <a href="diary.html" class="tutorial-card">
+      <div class="card-banner banner-diary">
+        <div class="banner-bg" style="background: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 12px);"></div>
+        <span class="banner-emoji">&#128214;</span>
+      </div>
+      <div class="card-body">
+        <span class="card-level">&#128640; Intermediate</span>
+        <h2>Diary &amp; Notes</h2>
+        <p class="card-desc">Create a personal diary app with date insertion and quick notes. Explore <strong>let</strong> bindings, <strong>interactive</strong> specs, time functions, lists, and file I/O in Emacs Lisp.</p>
+        <div class="card-tags">
+          <span class="ctag ctag-green">let / let*</span>
+          <span class="ctag ctag-blue">interactive</span>
+          <span class="ctag ctag-orange">format-time-string</span>
+          <span class="ctag ctag-purple">file I/O</span>
+        </div>
+        <span class="card-cta cta-green">Start Tutorial &#8594;</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+</body>
+</html>
