@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World - Final Test PR</title>
+    <title>Hello World - Interactive Test PR</title>
     <style>
         body {
             margin: 0;
@@ -12,41 +12,126 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
         }
         .card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3rem;
+            border-radius: 20px;
             text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            max-width: 350px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            z-index: 10;
+            transition: transform 0.3s;
         }
-        h1 { color: #333; margin-bottom: 0.5rem; }
-        .desc { color: #666; margin-bottom: 1rem; font-size: 0.95rem; }
-        .tag {
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .desc {
+            color: #555;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        .badge {
             display: inline-block;
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 0.3rem 0.8rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
+            padding: 0.5rem 1.2rem;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+        .interactive-btn {
+            margin-top: 1.5rem;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 0.7rem 2rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .interactive-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
         .footer {
-            margin-top: 1rem;
-            font-size: 0.7rem;
+            margin-top: 2rem;
+            font-size: 0.8rem;
             color: #999;
+        }
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            animation: float-up 15s infinite linear;
+            opacity: 0;
+        }
+        @keyframes float-up {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
         }
     </style>
 </head>
 <body>
+    <div class="particles" id="particles"></div>
     <div class="card">
         <h1>Hello World</h1>
-        <p class="desc">Final test PR - fresh branch</p>
-        <span class="tag">Test PR FINAL</span>
-        <div class="footer">Updated successfully via new branch</div>
+        <p class="desc">Interactive test PR with animations and particle effects</p>
+        <span class="badge">TEST PR</span>
+        <button class="interactive-btn" onclick="showMessage()">Click Me!</button>
+        <div class="footer" id="footer">Updated via new branch: <strong>feat/hello-world-final-test</strong></div>
     </div>
+    <script>
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for(let i = 0; i < 15; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 15 + 's';
+                p.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(p);
+            }
+        }
+        function showMessage() {
+            document.getElementById('footer').innerHTML = '&#x1F389; Button clicked at: <strong>' + new Date().toLocaleTimeString() + '</strong>';
+        }
+        createParticles();
+    </script>
 </body>
 </html>
