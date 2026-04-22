@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang=\"en\">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World - Simple Test PR</title>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Hello World - Limerick Edition</title>
     <style>
         body {
             margin: 0;
@@ -12,7 +12,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: Georgia, 'Times New Roman', serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         .card {
@@ -21,10 +21,21 @@
             border-radius: 12px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 320px;
+            max-width: 380px;
         }
-        h1 { color: #333; margin: 0 0 0.5rem; }
-        p { color: #666; margin: 0 0 1rem; font-size: 0.9rem; }
+        h1 { color: #333; margin: 0 0 1rem; font-size: 1.8rem; }
+        .limerick {
+            color: #555;
+            font-style: italic;
+            line-height: 1.6;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f5ff;
+            border-radius: 8px;
+            border-left: 4px solid #764ba2;
+            text-align: left;
+            font-size: 0.95rem;
+        }
         .tag {
             display: inline-block;
             background: #667eea;
@@ -33,24 +44,21 @@
             border-radius: 12px;
             font-size: 0.75rem;
             text-transform: uppercase;
-            margin-bottom: 1rem;
-        }
-        .footer {
             margin-top: 1rem;
-            font-size: 0.7rem;
-            color: #999;
-        }
-        .footer strong {
-            color: #667eea;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Hello World</h1>
-        <p>Simple test PR - clean design, no extra effects</p>
-        <span class="tag">Test PR v4</span>
-        <div class="footer">Updated on branch: <strong>feat/hello-world-pr-test-v4</strong></div>
+    <div class=\"card\">
+        <h1>Hello World!</h1>
+        <div class=\"limerick\">
+            There once was a dev from main,<br>
+            Who made commits again and again.<br>
+            With a limerick twist,<br>
+            Their code couldn't resist,<br>
+            A poem that ran to the ten.
+        </div>
+        <span class=\"tag\">Poetic PR</span>
     </div>
 </body>
 </html>
